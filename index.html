@@ -858,21 +858,62 @@ pre {
   <div class="ch-hero">
     <div class="ch-tag">CHAPTER 01 · CORE CONCEPT</div>
     <h2>🤖 什么是 AI Agent？</h2>
-    <p>在写代码之前，先建立最重要的认知：Agent 到底是什么，它凭什么比普通聊天 AI 强大得多。</p>
+    <p>在写代码之前，先建立最重要的认知：Agent 是一种全新的软件形态，和你熟悉的网站、App 有本质不同。</p>
   </div>
   <div class="ch-body">
-    <h3 id="s1-1">普通 AI 对话 vs AI Agent</h3>
-    <p>你用过 ChatGPT 或 Claude 聊天吗？那是最基础的使用方式：你问，AI 答，仅此而已。</p>
+    <h3 id="s1-1">AI Agent 在软件世界里是什么位置？</h3>
+    <p>你可能用过网站、App、小程序——它们都是软件，但 AI Agent 和它们有本质区别：<strong>逻辑不是开发者写死的，而是 LLM 实时推理决定的。</strong></p>
 
-    <table class="ctable">
-      <tr><th>对比维度</th><th>普通 AI 对话</th><th>AI Agent</th></tr>
-      <tr><td><strong>能力</strong></td><td>只能回答、生成文字</td><td>可以执行操作、调用工具、访问网络</td></tr>
-      <tr><td><strong>工作方式</strong></td><td>一问一答，单步骤</td><td>自主规划，多步骤连续执行</td></tr>
-      <tr><td><strong>记忆</strong></td><td>只有当前对话</td><td>可写入/读取外部数据库</td></tr>
-      <tr><td><strong>举例</strong></td><td>"帮我写一封邮件" → 生成文字</td><td>"帮我发一封邮件给 Bob" → 真正发出去</td></tr>
-    </table>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.06);margin:20px 0;">
+      <div style="background:var(--bg);padding:16px 14px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-3);margin-bottom:10px">🌐 网站 / App</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.8">
+          流程由开发者<strong style="color:var(--text)">提前写死</strong><br>
+          用户点按钮触发<br>
+          遇到意外→报错<br>
+          能力取决于代码
+        </div>
+      </div>
+      <div style="background:var(--bg);padding:16px 14px;border-left:1px solid rgba(255,255,255,0.06);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-3);margin-bottom:10px">💬 AI 聊天（ChatGPT）</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.8">
+          能理解自然语言<br>
+          一问一答，单步骤<br>
+          只能生成<strong style="color:var(--text)">文字</strong><br>
+          不能执行真实操作
+        </div>
+      </div>
+      <div style="background:var(--bg);padding:16px 14px;border-left:1px solid rgba(255,255,255,0.06);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-3);margin-bottom:10px">🔄 传统自动化（RPA）</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.8">
+          能执行操作<br>
+          流程固定，不灵活<br>
+          遇到意外→卡死<br>
+          不能理解语义
+        </div>
+      </div>
+      <div style="background:rgba(184,255,0,.03);padding:16px 14px;border-left:1px solid rgba(184,255,0,.2);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--lime);margin-bottom:10px">⚡ AI Agent</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.8">
+          理解语言 <strong style="color:var(--lime)">+</strong> 执行操作<br>
+          自主规划多步骤<br>
+          遇到意外→灵活应对<br>
+          能力由工具决定
+        </div>
+      </div>
+    </div>
 
-    <div class="callout callout-success"><strong>一句话定义：</strong> Agent = LLM（大脑）+ 工具（手脚）+ 循环（持续行动）</div>
+    <div class="callout callout-tip">
+      <strong>一个例子看清楚：</strong>"帮我订明天去上海的高铁票"<br>
+      <span style="color:var(--text-2)">
+      网站：你自己去 12306 点点点 ·
+      AI 聊天：告诉你怎么操作，但不帮你买 ·
+      RPA：能买，但你得提前把每一步都脚本化 ·
+      <strong style="color:var(--lime)">Agent：理解你的需求，自主搜索、选座、支付，搞定</strong>
+      </span>
+    </div>
+
+    <div class="callout callout-success" style="margin-top:12px"><strong>一句话定义：</strong> Agent = LLM（大脑）+ 工具（手脚）+ 循环（持续行动）</div>
 
     <h3 id="s1-2">Agent 的四大核心组件</h3>
     <div class="card-grid">
