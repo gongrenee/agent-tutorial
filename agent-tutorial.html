@@ -521,6 +521,8 @@ pre {
 .rtable { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0; }
 .rtable th { padding: 9px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); font-size: 10px; text-transform:uppercase; letter-spacing:1.2px; color: var(--text-3); }
 .rtable td { padding: 10px 14px; border: 1px solid rgba(255,255,255,0.06); color: var(--text-2); vertical-align: top; }
+.rtable a { color: var(--lime); text-decoration: none; }
+.rtable a:hover { text-decoration: underline; }
 .rtable tr:nth-child(even) td { background: rgba(255,255,255,.015); }
 
 /* ═══════════════════════════════════════
@@ -2281,11 +2283,11 @@ client = anthropic.<span class="cl">Anthropic</span>()
     <h3>推荐资源</h3>
     <table class="rtable">
       <tr><th>资源</th><th>内容</th><th>地址</th></tr>
-      <tr><td><strong>Anthropic 官方文档</strong></td><td>Claude API 完整文档</td><td><code>docs.anthropic.com</code></td></tr>
-      <tr><td><strong>LangChain</strong></td><td>流行 Agent 框架</td><td><code>langchain.com</code></td></tr>
-      <tr><td><strong>LangGraph</strong></td><td>多 Agent 图形框架</td><td><code>langchain.com/langgraph</code></td></tr>
-      <tr><td><strong>AutoGen</strong></td><td>微软多 Agent 框架</td><td><code>github.com/microsoft/autogen</code></td></tr>
-      <tr><td><strong>Chroma</strong></td><td>向量数据库</td><td><code>trychroma.com</code></td></tr>
+      <tr><td><strong>Anthropic 官方文档</strong></td><td>Claude API 完整文档</td><td><a href="https://docs.anthropic.com" target="_blank"><code>docs.anthropic.com</code></a></td></tr>
+      <tr><td><strong>LangChain</strong></td><td>流行 Agent 框架</td><td><a href="https://langchain.com" target="_blank"><code>langchain.com</code></a></td></tr>
+      <tr><td><strong>LangGraph</strong></td><td>多 Agent 图形框架</td><td><a href="https://langchain.com/langgraph" target="_blank"><code>langchain.com/langgraph</code></a></td></tr>
+      <tr><td><strong>AutoGen</strong></td><td>微软多 Agent 框架</td><td><a href="https://github.com/microsoft/autogen" target="_blank"><code>github.com/microsoft/autogen</code></a></td></tr>
+      <tr><td><strong>Chroma</strong></td><td>向量数据库</td><td><a href="https://trychroma.com" target="_blank"><code>trychroma.com</code></a></td></tr>
     </table>
 
     <div class="callout callout-success">🎓 <strong>课程完成！</strong>你已掌握构建 AI Agent 的全部核心知识。从 LLM 调用到工具定义，从 Agent 循环到记忆系统——这些是所有 Agent 框架的底层基础。祝你构建出改变世界的 Agent！</div>
