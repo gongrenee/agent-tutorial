@@ -1670,6 +1670,11 @@ exec_client = anthropic.<span class="cl">Anthropic</span>()
   </div>
   <div class="ch-body">
     <h3 id="s5-1">ReAct = Reason + Act（推理 + 行动）</h3>
+    <div class="callout" style="border-color:rgba(184,255,0,.2);background:rgba(184,255,0,.03);margin-bottom:20px">
+      <strong style="color:var(--lime)">三个概念，同一件事的不同层级：</strong><br>
+      <span style="color:var(--text-2)"><strong style="color:var(--text)">ReAct</strong> 是每一轮循环里 LLM 的思考方式 → <strong style="color:var(--text)">Agent 循环</strong>（本章）是把 ReAct 用 <code>while True</code> 串起来的代码结构 → <strong style="color:var(--text)">Loop Engineering</strong>（进阶章）是你用自然语言指令驾驭这整套机制，让 Agent 自主迭代。</span><br><br>
+      <span style="color:var(--text-3)">理解了 ReAct，就理解了循环的"每一步在干什么"；理解了循环，才能设计出真正可控的 Loop Engineering 指令。</span>
+    </div>
     <div class="react-steps">
       <div class="rs rs-t">
         <div class="ri">🧠</div>
