@@ -1,0 +1,2934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>从零构建 AI Agent — 交互式教程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
+<style>
+/* ── Design Tokens — zkPass Editorial ── */
+:root {
+  --bg:        #000000;
+  --bg1:       #060606;
+  --bg2:       #0d0d0d;
+  --bg3:       #141414;
+
+  --lime:      #B8FF00;
+  --lime-dim:  rgba(184,255,0,0.07);
+  --lime-glow: rgba(184,255,0,0.18);
+  --lime-line: rgba(184,255,0,0.12);
+
+  --cyan:      #B8FF00;
+  --cyan-h:    #ccff33;
+  --cyan-dim:  rgba(184,255,0,0.07);
+  --cyan-glow: rgba(184,255,0,0.15);
+  --cyan-line: rgba(255,255,255,0.04);
+
+  --purple:    #ffffff;
+  --purple-dim:rgba(255,255,255,0.05);
+  --purple-glow:rgba(255,255,255,0.08);
+
+  --green:     #B8FF00;
+  --green-dim: rgba(184,255,0,0.07);
+
+  --border:    rgba(255,255,255,0.1);
+  --border-h:  rgba(255,255,255,0.35);
+  --border-p:  rgba(255,255,255,0.15);
+
+  --text:      #FFFFFF;
+  --text-2:    #999999;
+  --text-3:    #555555;
+
+  --font:   'Inter', sans-serif;
+  --serif:  'Playfair Display', Georgia, serif;
+  --mono:   'JetBrains Mono', Consolas, monospace;
+  --sidebar-w: 272px;
+  --r: 2px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  font-size: 14.5px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══════════════════════════════════════
+   BACKGROUND — Grid + Orbs
+═══════════════════════════════════════ */
+.bg-layer {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.bg-layer::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(184,255,0,0.04) 0%, transparent 70%);
+}
+
+/* ═══════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════ */
+#sidebar {
+  position: relative; z-index: 10;
+  width: var(--sidebar-w);
+  background: rgba(0,0,0,0.96);
+  border-right: 1px solid rgba(255,255,255,0.08);
+  display: flex; flex-direction: column;
+  overflow-y: auto; flex-shrink: 0;
+}
+
+/* Logo */
+.sidebar-logo {
+  padding: 20px 18px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.logo-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  color: #000; background: var(--lime);
+  padding: 3px 7px; margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.logo-text h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px; font-weight: 700; line-height: 1.2;
+  color: var(--text); letter-spacing: 0;
+}
+.logo-text h1 span { color: var(--lime); }
+.logo-text p {
+  font-size: 10px; color: var(--text-3); margin-top: 7px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
+}
+.logo-text p::before {
+  content: ''; display: inline-block;
+  width: 16px; height: 1px; background: var(--lime); flex-shrink: 0;
+}
+
+/* Progress */
+.prog-wrap {
+  padding: 13px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.prog-meta {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--text-3); margin-bottom: 7px;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px;
+}
+.prog-track {
+  height: 1px; background: rgba(255,255,255,.08);
+  overflow: visible; position: relative;
+}
+.prog-fill {
+  height: 100%;
+  background: var(--lime);
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+  position: relative;
+}
+.prog-fill::after {
+  content: '';
+  position: absolute; right: -3px; top: -3px;
+  width: 7px; height: 7px;
+  background: var(--lime);
+  box-shadow: 0 0 8px var(--lime-glow);
+}
+
+/* Nav Items */
+.ch-list { padding: 10px 10px; flex: 1; }
+.ch-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--text-3);
+  font-size: 12px; font-weight: 500;
+  transition: all .15s;
+  position: relative;
+  margin-bottom: 1px;
+  border-left: 2px solid transparent;
+}
+.ch-item:hover { color: var(--text); }
+.ch-item.active {
+  color: var(--lime);
+  border-left-color: var(--lime);
+}
+.ch-item.done { color: var(--text-3); }
+
+/* Number badge */
+.ch-hex {
+  width: 20px; height: 20px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: var(--text-3);
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: all .15s;
+}
+.ch-item.active .ch-hex {
+  background: var(--lime);
+  color: #000;
+  border-color: var(--lime);
+}
+.ch-item.done .ch-hex {
+  color: var(--lime);
+  border-color: rgba(184,255,0,0.3);
+}
+.ch-label { font-size: 12px; line-height: 1.3; }
+.ch-section { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-3); padding: 14px 10px 4px; text-transform: uppercase; }
+
+/* ═══════════════════════════════════════
+   MAIN
+═══════════════════════════════════════ */
+#main { flex: 1; overflow-y: auto; position: relative; z-index: 1; }
+
+.ch-page { display: none; min-height: 100vh; flex-direction: column; }
+.ch-page.visible { display: flex; }
+
+/* Hero */
+.ch-hero {
+  padding: 52px 52px 40px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  position: relative; overflow: hidden;
+}
+.ch-hero::before { content: none; }
+.ch-hero::after  { content: none; }
+
+.ch-tag {
+  display: inline-flex; align-items: center; gap: 0;
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 2px;
+  color: var(--text-3); margin-bottom: 18px; position: relative;
+}
+.ch-tag::before { content: '[ '; color: var(--lime); margin-right: 4px; }
+.ch-tag::after  { content: ' ]'; color: var(--lime); margin-left: 4px; }
+
+.ch-hero h2 {
+  font-family: var(--serif);
+  font-size: 38px; font-weight: 900; letter-spacing: -.5px;
+  line-height: 1.1; margin-bottom: 16px; position: relative;
+  color: var(--text);
+}
+.ch-hero h2 em {
+  font-style: italic;
+  color: var(--lime);
+  -webkit-text-fill-color: var(--lime);
+}
+.ch-hero p { font-size: 15px; color: var(--text-2); max-width: 580px; position: relative; line-height: 1.7; }
+
+.ch-body { padding: 36px 52px 70px; max-width: 880px; flex: 1; }
+
+/* ═══════════════════════════════════════
+   TYPOGRAPHY
+═══════════════════════════════════════ */
+h3 {
+  font-family: var(--serif);
+  font-size: 18px; font-weight: 700; letter-spacing: -.2px;
+  margin: 42px 0 14px; color: var(--text);
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: 10px;
+}
+h3:first-child { margin-top: 0; }
+h3::before { content: none; }
+h4 { font-size: 10px; font-weight: 700; color: var(--text-3); margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1.5px; }
+p  { margin-bottom: 14px; color: var(--text-2); }
+ul, ol { margin: 0 0 16px 18px; color: var(--text-2); }
+li { margin-bottom: 7px; }
+strong { color: var(--text); font-weight: 600; }
+code {
+  font-family: var(--mono); font-size: 12px;
+  background: rgba(184,255,0,0.06);
+  color: var(--lime);
+  padding: 2px 7px;
+  border: 1px solid rgba(184,255,0,0.15);
+}
+
+/* ═══════════════════════════════════════
+   CARDS
+═══════════════════════════════════════ */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(195px,1fr)); gap: 1px; margin: 16px 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.06); }
+.card {
+  background: var(--bg);
+  padding: 20px 16px;
+  transition: background .18s;
+  position: relative; overflow: hidden;
+  cursor: default;
+}
+.card::before { content: none; }
+.card:hover { background: rgba(255,255,255,0.03); }
+.card .ci  { font-size: 22px; margin-bottom: 10px; }
+.card .ct  { font-size: 13px; font-weight: 700; margin-bottom: 5px; color: var(--text); letter-spacing: .2px; }
+.card .cd  { font-size: 12px; color: var(--text-3); line-height: 1.5; }
+
+/* ═══════════════════════════════════════
+   CALLOUTS
+═══════════════════════════════════════ */
+.callout {
+  padding: 14px 16px 14px 44px;
+  margin: 18px 0; border-left: 2px solid; font-size: 13.5px;
+  position: relative; line-height: 1.6;
+  background: rgba(255,255,255,0.02);
+}
+.callout::before { position: absolute; left: 14px; top: 14px; font-size: 15px; line-height: 1; }
+.callout-tip     { border-color: rgba(255,255,255,0.2); color: var(--text-2); }
+.callout-tip::before   { content: '💡'; }
+.callout-warn    { border-color: rgba(245,158,11,.5); color: var(--text-2); }
+.callout-warn::before  { content: '⚠️'; }
+.callout-success { border-color: var(--lime); color: var(--text-2); }
+.callout-success::before { content: '✅'; }
+
+/* ═══════════════════════════════════════
+   CODE BLOCKS — Editorial Style
+═══════════════════════════════════════ */
+.code-wrap {
+  background: #050505;
+  border: 1px solid rgba(255,255,255,0.1);
+  margin: 16px 0;
+  overflow: hidden;
+}
+.code-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.code-dots { display: flex; gap: 5px; }
+.code-dots span { width: 8px; height: 8px; border-radius: 50%; }
+.code-dots span:nth-child(1) { background: #444; }
+.code-dots span:nth-child(2) { background: #444; }
+.code-dots span:nth-child(3) { background: #444; }
+.code-fname { font-size: 11px; color: var(--text-3); font-family: var(--mono); letter-spacing: .5px; }
+.copy-btn {
+  background: transparent; border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text-3); padding: 2px 10px;
+  cursor: pointer; font-size: 10px; font-family: var(--font);
+  letter-spacing: .5px; text-transform: uppercase;
+  transition: all .15s;
+}
+.copy-btn:hover { border-color: var(--lime); color: var(--lime); }
+pre {
+  padding: 18px 16px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #aaaaaa;
+}
+.kw { color: #ffffff; font-weight: 600; }
+.fn { color: #B8FF00; }
+.st { color: #dddddd; }
+.cm { color: #444444; font-style: italic; }
+.nu { color: #B8FF00; }
+.cl { color: #ffffff; }
+.dc { color: #B8FF00; }
+.op { color: #888888; }
+
+/* Output block */
+.out-wrap {
+  background: #080808;
+  border: 1px solid rgba(184,255,0,.2);
+  margin: 12px 0; overflow: hidden;
+}
+.out-head {
+  padding: 7px 14px;
+  background: rgba(184,255,0,.04);
+  border-bottom: 1px solid rgba(184,255,0,.12);
+  font-size: 10px; color: var(--lime); font-weight: 700;
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px;
+}
+.out-head::before { content:''; width: 6px; height: 6px; background: var(--lime); }
+.out-wrap pre { padding: 14px 16px; font-size: 12.5px; color: #666; }
+
+/* ═══════════════════════════════════════
+   COMPARE TABLE
+═══════════════════════════════════════ */
+.ctable { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+.ctable th {
+  padding: 9px 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-3); font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700;
+}
+.ctable td { padding: 10px 14px; border: 1px solid rgba(255,255,255,0.06); color: var(--text-2); vertical-align: top; }
+.ctable tr:nth-child(even) td { background: rgba(255,255,255,.015); }
+.badge { display:inline-flex; align-items:center; gap: 4px; padding: 2px 8px; font-size: 10px; font-weight: 700; letter-spacing: .5px; }
+.badge::before { content:''; width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: .8; }
+.badge-c { background: rgba(184,255,0,.08); color: var(--lime); border: 1px solid rgba(184,255,0,.2); }
+.badge-p { background: rgba(255,255,255,.06); color: #ffffff; border: 1px solid rgba(255,255,255,.15); }
+.badge-g { background: rgba(184,255,0,.08); color: var(--lime); border: 1px solid rgba(184,255,0,.2); }
+.badge-o { background: rgba(245,158,11,.08); color: #FCD34D; border: 1px solid rgba(245,158,11,.2); }
+
+/* ═══════════════════════════════════════
+   TABS
+═══════════════════════════════════════ */
+.tabs { margin: 18px 0; }
+.tab-btns { display: flex; gap: 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.tab-btn {
+  padding: 8px 18px; font-size: 11px; cursor: pointer;
+  border: none; background: transparent; color: var(--text-3);
+  font-family: var(--font); font-weight: 600;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all .15s; letter-spacing: 1px; text-transform: uppercase;
+}
+.tab-btn:hover { color: var(--text-2); }
+.tab-btn.active { color: var(--lime); border-bottom-color: var(--lime); }
+.tab-p { display: none; }
+.tab-p.active { display: block; }
+
+/* ═══════════════════════════════════════
+   STEP LIST
+═══════════════════════════════════════ */
+.step-list { margin: 16px 0; }
+.step-item { display: flex; gap: 14px; margin-bottom: 18px; }
+.step-n {
+  width: 26px; height: 26px; flex-shrink: 0; margin-top: 1px;
+  background: var(--lime);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 11px; color: #000;
+}
+.step-title { font-weight: 700; margin-bottom: 3px; font-size: 13.5px; color: var(--text); }
+.step-desc  { font-size: 13px; color: var(--text-3); }
+
+/* ═══════════════════════════════════════
+   AGENT LOOP DIAGRAM
+═══════════════════════════════════════ */
+.diag-box {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 28px 20px;
+  margin: 20px 0;
+  position: relative; overflow: hidden;
+}
+.diag-box::before { content: none; }
+.loop-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; flex-wrap: wrap;
+}
+.loop-n {
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 14px 18px;
+  text-align: center; min-width: 108px;
+  position: relative; background: rgba(255,255,255,0.02);
+}
+.loop-n .ni { font-size: 22px; margin-bottom: 5px; }
+.loop-n .nl { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.loop-n .ns { font-size: 10px; color: var(--text-3); margin-top: 3px; letter-spacing: .3px; }
+.loop-n.ln-user    { border-color: rgba(184,255,0,.3); }
+.loop-n.ln-think   { border-color: rgba(255,255,255,.2); }
+.loop-n.ln-act     { border-color: rgba(184,255,0,.3); }
+.loop-n.ln-observe { border-color: rgba(184,255,0,.2); }
+
+/* Animated arrow */
+.loop-arr {
+  display: flex; align-items: center; padding: 0 6px; flex-shrink: 0;
+}
+.loop-arr svg { overflow: visible; }
+@keyframes flow { to { stroke-dashoffset: -24; } }
+.flow-line { animation: flow 1.5s linear infinite; }
+
+/* Subtle active border pulse */
+@keyframes pls-border { 0%,100%{border-color:rgba(255,255,255,.12)} 50%{border-color:rgba(184,255,0,.4)} }
+.ap-think   { animation: pls-border 2.4s ease-in-out 0s infinite; }
+.ap-act     { animation: pls-border 2.4s ease-in-out .8s infinite; }
+.ap-observe { animation: pls-border 2.4s ease-in-out 1.6s infinite; }
+
+/* ═══════════════════════════════════════
+   ARCH FLOW DIAGRAM
+═══════════════════════════════════════ */
+.arch-flow { display: flex; flex-direction: column; align-items: center; gap: 0; max-width: 420px; margin: 0 auto; }
+.arch-box  {
+  border: 1px solid; border-radius: var(--r);
+  padding: 11px 20px; text-align: center;
+  font-size: 13px; font-weight: 600; width: 100%;
+}
+.arch-arrow { text-align: center; color: var(--text-3); font-size: 16px; padding: 4px 0; line-height: 1; }
+
+/* ═══════════════════════════════════════
+   MEM GRID
+═══════════════════════════════════════ */
+.mem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 14px 0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.06); }
+.mem-card {
+  background: var(--bg);
+  padding: 16px;
+}
+.mem-card h5 { font-size: 12px; font-weight: 700; margin-bottom: 8px; letter-spacing: .3px; }
+.mem-card ul { font-size: 12px; color: var(--text-3); margin-left: 14px; }
+.mem-card li { margin-bottom: 4px; }
+
+/* ═══════════════════════════════════════
+   REACT STEPS
+═══════════════════════════════════════ */
+.react-steps { display: flex; flex-direction: column; gap: 0; max-width: 520px; border: 1px solid rgba(255,255,255,0.08); }
+.rs {
+  display: flex; gap: 14px; align-items: flex-start;
+  border-bottom: 1px solid rgba(255,255,255,0.06); padding: 16px;
+  background: transparent;
+}
+.rs:last-child { border-bottom: none; }
+.rs .ri { font-size: 20px; flex-shrink: 0; }
+.rs .rt { font-weight: 700; font-size: 13px; margin-bottom: 3px; letter-spacing: .2px; }
+.rs .rd { font-size: 12.5px; color: var(--text-3); }
+.rs-t { border-left: 2px solid rgba(255,255,255,.2); }
+.rs-a { border-left: 2px solid var(--lime); }
+.rs-o { border-left: 2px solid rgba(184,255,0,.4); }
+.rs-conn { display: none; }
+
+/* ═══════════════════════════════════════
+   QUIZ
+═══════════════════════════════════════ */
+.quiz-box {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 20px; margin: 22px 0;
+}
+.quiz-q { font-weight: 700; font-size: 14px; margin-bottom: 14px; color: var(--text); }
+.quiz-o {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
+  margin-bottom: 6px; font-size: 13px; font-family: var(--font);
+  background: transparent; color: var(--text-2); width: 100%; text-align: left;
+  transition: all .15s;
+}
+.quiz-o:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+.quiz-o.correct { border-color: var(--lime); background: rgba(184,255,0,.06); color: var(--lime); }
+.quiz-o.wrong   { border-color: rgba(239,68,68,.4); background: rgba(239,68,68,.04); color: #FC8181; }
+.quiz-res { margin-top: 10px; font-size: 13px; display: none; }
+
+/* ═══════════════════════════════════════
+   PILL TAGS
+═══════════════════════════════════════ */
+.pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.pill {
+  padding: 4px 12px; font-size: 11px; font-weight: 600;
+  border: 1px solid; cursor: default; letter-spacing: .3px;
+}
+.pill-c { background: rgba(184,255,0,.06); border-color: rgba(184,255,0,.25); color: var(--lime); }
+.pill-p { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.15); color: #cccccc; }
+.pill-g { background: rgba(184,255,0,.06); border-color: rgba(184,255,0,.2); color: var(--lime); }
+
+/* ═══════════════════════════════════════
+   RES TABLE
+═══════════════════════════════════════ */
+.rtable { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0; }
+.rtable th { padding: 9px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); font-size: 10px; text-transform:uppercase; letter-spacing:1.2px; color: var(--text-3); }
+.rtable td { padding: 10px 14px; border: 1px solid rgba(255,255,255,0.06); color: var(--text-2); vertical-align: top; }
+.rtable tr:nth-child(even) td { background: rgba(255,255,255,.015); }
+
+/* ═══════════════════════════════════════
+   LEARN ROADMAP
+═══════════════════════════════════════ */
+.roadmap-item {
+  display: flex; gap: 16px; margin-bottom: 0; align-items: flex-start;
+  padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.roadmap-item:last-child { border-bottom: none; }
+.rm-icon {
+  width: 28px; height: 28px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; margin-top: 1px;
+  border: 1px solid;
+}
+.rm-icon.done   { border-color: var(--lime); color: var(--lime); background: rgba(184,255,0,.06); }
+.rm-icon.next   { border-color: var(--lime); color: #000; background: var(--lime); }
+.rm-icon.future { border-color: rgba(255,255,255,.1); color: var(--text-3); }
+.rm-title { font-weight: 700; font-size: 13.5px; margin-bottom: 3px; }
+.rm-desc  { font-size: 12.5px; color: var(--text-3); }
+
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+.nav-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 52px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.9);
+}
+.btn {
+  padding: 9px 22px;
+  font-size: 11px; font-weight: 600; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: transparent;
+  color: var(--text-2); font-family: var(--font);
+  transition: all .15s; letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn:hover { border-color: rgba(255,255,255,0.5); color: var(--text); }
+.btn-primary {
+  background: var(--lime);
+  color: #000; border-color: var(--lime);
+  font-weight: 700;
+}
+.btn-primary:hover {
+  background: #ccff33;
+  border-color: #ccff33;
+  color: #000;
+}
+.btn:disabled { opacity: .2; cursor: not-allowed; pointer-events: none; }
+
+/* ═══════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════ */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); }
+::-webkit-scrollbar-thumb:hover { background: rgba(184,255,0,.3); }
+
+/* ═══════════════════════════════════════
+   HERO PARTICLE CANVAS
+═══════════════════════════════════════ */
+.hero-particles {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  overflow: hidden;
+}
+.hero-particles span {
+  position: absolute;
+  width: 2px; height: 2px;
+  background: var(--lime);
+  border-radius: 50%;
+  opacity: 0;
+  animation: particle-drift var(--dur, 6s) linear var(--delay, 0s) infinite;
+}
+@keyframes particle-drift {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: .5; }
+  90%  { opacity: .2; }
+  100% { transform: translateY(-80px) translateX(var(--dx, 20px)); opacity: 0; }
+}
+.ch-hero > * { position: relative; z-index: 1; }
+
+/* ── Learning-path strip ─────────────────────────────── */
+.lp-node {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:16px 20px; min-width:110px; cursor:pointer; transition:background .2s;
+  flex-shrink:0;
+}
+.lp-node:hover { background:rgba(184,255,0,.06); }
+.lp-num { font-size:10px; font-weight:700; letter-spacing:1px; color:var(--lime); margin-bottom:6px; }
+.lp-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:4px; white-space:nowrap; }
+.lp-sub { font-size:11px; color:var(--text-3); white-space:nowrap; }
+.lp-arrow {
+  display:flex; align-items:center; color:var(--text-3); font-size:16px;
+  flex-shrink:0; padding:0 4px;
+}
+
+/* ── Right-side anchor nav ───────────────────────────── */
+#anchor-nav {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: flex-start;
+}
+#anchor-tab { display: none; }
+#anchor-panel {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-right: none;
+  min-width: 168px;
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+}
+#anchor-panel-title {
+  font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+  color: var(--text-3); padding: 0 14px 10px; border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.an-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px; font-size: 12px; color: var(--text-2);
+  cursor: pointer; transition: color .15s, background .15s;
+  border-left: 2px solid transparent;
+}
+.an-item:hover { color: var(--text); background: rgba(255,255,255,.04); }
+.an-item.active { color: var(--lime); border-left-color: var(--lime); background: rgba(184,255,0,.05); }
+.an-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+/* ── Prompt Tips ─────────────────────────────────────── */
+.prompt-tips {
+  border: 1px solid rgba(184,255,0,.25);
+  background: rgba(184,255,0,.03);
+  margin: 32px 0 8px;
+}
+.pt-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; border-bottom: 1px solid rgba(184,255,0,.15);
+}
+.pt-icon { font-size: 15px; }
+.pt-title { font-size: 12px; font-weight: 700; color: var(--lime); letter-spacing: .5px; }
+.pt-sub { font-size: 11px; color: var(--text-3); margin-left: auto; }
+.pt-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.05);
+  position: relative;
+}
+.pt-item:last-child { border-bottom: none; }
+.pt-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 1.2px;
+  color: var(--lime); white-space: nowrap; padding-top: 2px; min-width: 52px;
+}
+.pt-text {
+  font-size: 12px; color: var(--text-2); line-height: 1.7; flex: 1;
+  font-family: var(--mono);
+}
+.pt-copy {
+  flex-shrink: 0; font-size: 10px; font-weight: 600; padding: 3px 9px;
+  background: transparent; border: 1px solid rgba(184,255,0,.3);
+  color: var(--lime); cursor: pointer; transition: background .15s;
+}
+.pt-copy:hover { background: rgba(184,255,0,.1); }
+</style>
+</head>
+<body>
+
+<!-- Background grid + orbs -->
+<div class="bg-layer"></div>
+
+<!-- ═══════════════════════════ SIDEBAR ═══════════════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-badge">COURSE</div>
+    <div class="logo-text">
+      <h1>Agent<span> 开发</span>课程</h1>
+      <p>Zero → Agent · 交互式教程</p>
+    </div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-meta"><span>PROGRESS</span><span id="prog-text">0 / 10</span></div>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+  <div class="ch-list" id="ch-list"></div>
+</nav>
+
+<!-- ═══════════════════════════ MAIN ═══════════════════════════ -->
+<div id="main">
+
+<!-- ══════════ CH 0: 欢迎 ══════════ -->
+<div class="ch-page visible" id="ch-0">
+  <div class="ch-hero">
+    <div class="ch-tag">WELCOME · GETTING STARTED</div>
+    <h2>你好，未来的 Agent 开发者 🚀</h2>
+    <p>从零开始，一步步理解并构建真实的 AI Agent。无需 AI 基础，只需好奇心。</p>
+  </div>
+  <div class="ch-body">
+    <h3>你将学到什么</h3>
+    <div class="card-grid">
+      <div class="card"><div class="ci">🧠</div><div class="ct">Agent 的本质</div><div class="cd">理解 Agent 和普通 AI 聊天的核心区别</div></div>
+      <div class="card"><div class="ci">🐍</div><div class="ct">语言选择</div><div class="cd">Python vs TypeScript 深度对比分析</div></div>
+      <div class="card"><div class="ci">🔧</div><div class="ct">工具调用</div><div class="cd">让 AI 真正"动手"执行任务的核心技术</div></div>
+      <div class="card"><div class="ci">🔄</div><div class="ct">Agent 循环</div><div class="cd">思考 → 行动 → 观察的运作机制</div></div>
+      <div class="card"><div class="ci">🗄️</div><div class="ct">记忆系统</div><div class="cd">短期上下文与长期记忆的实现</div></div>
+      <div class="card"><div class="ci">⚡</div><div class="ct">动手构建</div><div class="cd">写出完整可运行的真实 Agent 代码</div></div>
+    </div>
+
+    <h3>AI Coding 时代，还需要学这些吗？</h3>
+    <p style="color:var(--text-2)">Cursor、Claude Code 这类工具已经能帮你生成 Agent 骨架代码，LangChain 这类框架也封装了大量模板。那为什么还要理解底层原理？</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.06);margin:16px 0;">
+      <div style="background:var(--bg);padding:20px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-3);margin-bottom:10px">❌ 不懂原理</div>
+        <div style="font-size:13px;color:var(--text-2);line-height:1.8">
+          代码跑起来了，但出了问题不知道为什么。<br><br>
+          框架帮你做了决策，但你无法判断决策对不对。<br><br>
+          给 AI 的描述很模糊，生成的代码质量参差不齐。
+        </div>
+      </div>
+      <div style="background:var(--bg);padding:20px 18px;border-left:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--lime);margin-bottom:10px">✅ 懂了原理</div>
+        <div style="font-size:13px;color:var(--text-2);line-height:1.8">
+          System Prompt 怎么写才能让 Agent 行为可控？<br><br>
+          工具 description 写清楚了吗？写模糊会导致 LLM 选错。<br><br>
+          上下文快满了，用截断还是摘要压缩？
+        </div>
+      </div>
+      <div style="background:var(--bg);padding:20px 18px;border-left:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--lime);margin-bottom:10px">🚀 真正的差距</div>
+        <div style="font-size:13px;color:var(--text-2);line-height:1.8">
+          AI Coding 时代，差距不在于"谁写代码快"，而在于<strong style="color:var(--text)">谁能给 AI 更精准的指令</strong>。<br><br>
+          懂原理的人，一句话描述需求，AI 能给出生产级代码。
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-tip">
+      <strong>这门课的真正目标不是让你背会代码，而是建立足够清晰的心智模型</strong>——让你能设计、评估、优化 Agent，然后用 AI 帮你实现它。
+    </div>
+
+    <h3>下一步趋势：Loop Engineering</h3>
+    <p style="color:var(--text-2)">最近 AI 圈流行一个新范式——<strong style="color:var(--text)">Loop Engineering</strong>：不再自己写代码，而是设计一套指令，让 Agent 自主循环迭代，写代码、测试、发现错误、修复，直到任务完成。</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0;">
+      <div style="border:1px solid rgba(255,255,255,0.1);padding:18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-3);margin-bottom:10px">🔧 传统 AI Coding</div>
+        <div style="font-size:13px;color:var(--text-2);line-height:1.9">
+          你描述需求 → AI 生成代码<br>
+          你运行代码 → 发现 Bug<br>
+          你描述 Bug → AI 修复<br>
+          <span style="color:var(--text-3)">重复 N 次，每次都靠你介入</span>
+        </div>
+      </div>
+      <div style="border:1px solid rgba(184,255,0,.3);padding:18px;background:rgba(184,255,0,.02)">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--lime);margin-bottom:10px">⚡ Loop Engineering</div>
+        <div style="font-size:13px;color:var(--text-2);line-height:1.9">
+          你设计循环指令 → Agent 生成代码<br>
+          Agent 自动测试 → 发现 Bug<br>
+          Agent 自主修复 → 重新测试<br>
+          <span style="color:var(--lime)">直到所有测试通过，你只看结果</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout" style="border-color:rgba(184,255,0,.2);background:rgba(184,255,0,.03)">
+      <strong style="color:var(--lime)">为什么你还是要懂 Agent 原理？</strong><br>
+      Loop Engineering 的本质，就是你在给 Agent 设计一个 <strong>更大的 Agent 循环</strong>。你需要理解：循环什么时候会卡死？工具该怎么定义才能让 Agent 正确调用？上下文满了怎么办？<br><br>
+      <strong>不懂底层，设计出的 Loop 要么跑不动，要么出错你不知道为什么。</strong>
+    </div>
+
+    <div style="border:1px solid rgba(255,255,255,0.08);margin:16px 0;">
+      <div style="padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-3)">LOOP ENGINEERING · 指令示例</div>
+      <div style="padding:16px;font-family:var(--mono);font-size:12px;color:var(--text-2);line-height:2">
+        你是一个 Python 开发 Agent。任务：实现一个天气查询 CLI 工具。<br>
+        循环执行以下步骤，直到所有测试通过：<br>
+        <span style="color:var(--lime)">① 编写代码</span> → <span style="color:var(--lime)">② 运行 pytest</span> → <span style="color:var(--lime)">③ 分析错误</span> → <span style="color:var(--lime)">④ 修复并重试</span><br>
+        最多迭代 10 轮，超过则停止并报告卡点。
+      </div>
+    </div>
+
+    <p style="color:var(--text-3);font-size:12px">完成本课程后，你会发现写出这样的循环指令变得非常自然——因为你已经理解了 Agent 每一步在做什么。</p>
+
+    <h3>课程路线图</h3>
+
+    <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text-3);margin:16px 0 8px">── 入门篇</div>
+    <div class="step-list">
+      <div class="step-item"><div class="step-n">1</div><div><div class="step-title">什么是 AI Agent？</div><div class="step-desc">建立核心认知，理解 Agent 与 ChatGPT 的本质区别</div></div></div>
+      <div class="step-item"><div class="step-n">2</div><div><div class="step-title">编程语言选择</div><div class="step-desc">Python vs TypeScript 深度对比，选出最适合你的</div></div></div>
+      <div class="step-item"><div class="step-n">3</div><div><div class="step-title">LLM 基础知识</div><div class="step-desc">大语言模型原理、Token、Prompt、API 调用</div></div></div>
+      <div class="step-item"><div class="step-n">4</div><div><div class="step-title">工具调用（Function Calling）</div><div class="step-desc">Agent 最核心技术：定义工具、执行函数</div></div></div>
+      <div class="step-item"><div class="step-n">5</div><div><div class="step-title">Agent 循环（ReAct）</div><div class="step-desc">思考→行动→观察的完整循环代码实现</div></div></div>
+      <div class="step-item"><div class="step-n">6</div><div><div class="step-title">记忆系统</div><div class="step-desc">四种记忆类型、上下文管理、长期持久化</div></div></div>
+      <div class="step-item"><div class="step-n">7</div><div><div class="step-title">构建第一个 Agent</div><div class="step-desc">完整可运行的 Python 代码，交互式智能助手</div></div></div>
+    </div>
+
+    <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text-3);margin:20px 0 8px">── 进阶篇</div>
+    <div class="step-list">
+      <div class="step-item"><div class="step-n" style="background:rgba(184,255,0,.15);color:var(--lime);border-color:rgba(184,255,0,.3)">8</div><div><div class="step-title">进阶概念</div><div class="step-desc">多 Agent 系统架构 · Loop Engineering 自主迭代设计 · 学习路线</div></div></div>
+      <div class="step-item"><div class="step-n" style="background:rgba(184,255,0,.15);color:var(--lime);border-color:rgba(184,255,0,.3)">9</div><div><div class="step-title">Agent 质量评估</div><div class="step-desc">Golden Set 测试、量化指标、持续改进方法论</div></div></div>
+      <div class="step-item"><div class="step-n" style="background:rgba(184,255,0,.15);color:var(--lime);border-color:rgba(184,255,0,.3)">10</div><div><div class="step-title">多 Agent 协作设计</div><div class="step-desc">编排模式、上下文隔离、生产级多 Agent 系统</div></div></div>
+    </div>
+
+    <div class="callout callout-tip">每章都有<strong>小测验</strong>巩固理解，代码示例<strong>一键复制</strong>直接运行。建议按顺序学习，第 7 章有完整可运行代码！</div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" disabled>← 上一章</button>
+    <button class="btn btn-primary" onclick="goTo(1)">开始学习 →</button>
+  </div>
+</div>
+
+<!-- ══════════ CH 1: 什么是 Agent ══════════ -->
+<div class="ch-page" id="ch-1">
+  <div class="ch-hero">
+    <div class="ch-tag">CHAPTER 01 · CORE CONCEPT</div>
+    <h2>🤖 什么是 AI Agent？</h2>
+    <p>在写代码之前，先建立最重要的认知：Agent 到底是什么，它凭什么比普通聊天 AI 强大得多。</p>
+  </div>
+  <div class="ch-body">
+    <h3>普通 AI 对话 vs AI Agent</h3>
+    <p>你用过 ChatGPT 或 Claude 聊天吗？那是最基础的使用方式：你问，AI 答，仅此而已。</p>
+
+    <table class="ctable">
+      <tr><th>对比维度</th><th>普通 AI 对话</th><th>AI Agent</th></tr>
+      <tr><td><strong>能力</strong></td><td>只能回答、生成文字</td><td>可以执行操作、调用工具、访问网络</td></tr>
+      <tr><td><strong>工作方式</strong></td><td>一问一答，单步骤</td><td>自主规划，多步骤连续执行</td></tr>
+      <tr><td><strong>记忆</strong></td><td>只有当前对话</td><td>可写入/读取外部数据库</td></tr>
+      <tr><td><strong>举例</strong></td><td>"帮我写一封邮件" → 生成文字</td><td>"帮我发一封邮件给 Bob" → 真正发出去</td></tr>
+    </table>
+
+    <div class="callout callout-success"><strong>一句话定义：</strong> Agent = LLM（大脑）+ 工具（手脚）+ 循环（持续行动）</div>
+
+    <h3>Agent 的四大核心组件</h3>
+    <div class="card-grid">
+      <div class="card"><div class="ci">🧠</div><div class="ct">大脑（LLM）</div><div class="cd">Claude、GPT 等，负责理解指令、做出决策</div></div>
+      <div class="card"><div class="ci">🔧</div><div class="ct">工具（Tools）</div><div class="cd">搜索网页、读写文件、发邮件、查数据库……</div></div>
+      <div class="card"><div class="ci">🗄️</div><div class="ct">记忆（Memory）</div><div class="cd">短期上下文 + 长期数据库，让 Agent 记住信息</div></div>
+      <div class="card"><div class="ci">🔄</div><div class="ct">循环（Loop）</div><div class="cd">自主循环执行直到任务完成，不只回答一次</div></div>
+    </div>
+
+    <h3>Agent 如何运作</h3>
+    <p>假设你给 Agent 一个任务：<strong>"帮我研究最新 AI 新闻，整理成报告发到我邮箱"</strong></p>
+    <div class="diag-box">
+      <h4>AGENT EXECUTION FLOW</h4>
+      <div class="loop-row">
+        <div class="loop-n ln-user">
+          <div class="ni">👤</div><div class="nl" style="color:var(--lime)">USER</div><div class="ns">发出任务</div>
+        </div>
+        <div class="loop-arr">
+          <svg width="36" height="14"><line x1="2" y1="7" x2="32" y2="7" stroke="var(--lime)" stroke-width="1.5" stroke-dasharray="6 4" class="flow-line"/><polygon points="30,3 36,7 30,11" fill="var(--lime)"/></svg>
+        </div>
+        <div class="loop-n ln-think ap-think">
+          <div class="ni">🧠</div><div class="nl" style="color:#ffffff">THINK</div><div class="ns">规划步骤</div>
+        </div>
+        <div class="loop-arr">
+          <svg width="36" height="14"><line x1="2" y1="7" x2="32" y2="7" stroke="var(--lime)" stroke-width="1.5" stroke-dasharray="6 4" class="flow-line"/><polygon points="30,3 36,7 30,11" fill="var(--lime)"/></svg>
+        </div>
+        <div class="loop-n ln-act ap-act">
+          <div class="ni">⚡</div><div class="nl" style="color:var(--lime)">ACT</div><div class="ns">调用工具</div>
+        </div>
+        <div class="loop-arr">
+          <svg width="36" height="14"><line x1="2" y1="7" x2="32" y2="7" stroke="var(--lime)" stroke-width="1.5" stroke-dasharray="6 4" class="flow-line"/><polygon points="30,3 36,7 30,11" fill="var(--lime)"/></svg>
+        </div>
+        <div class="loop-n ln-observe ap-observe">
+          <div class="ni">👁️</div><div class="nl" style="color:var(--lime)">OBSERVE</div><div class="ns">获取结果</div>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:11.5px;color:var(--text-3);margin-top:16px;margin-bottom:0;letter-spacing:.5px">↻ LOOP UNTIL TASK COMPLETE</p>
+    </div>
+
+    <h3>真实世界的 Agent 例子</h3>
+    <ul>
+      <li>🛍️ <strong>购物 Agent</strong>：比价、下单、追踪物流</li>
+      <li>💻 <strong>编程 Agent</strong>：读代码、找 Bug、自动修复（如 Claude Code）</li>
+      <li>📊 <strong>数据分析 Agent</strong>：读 Excel、画图表、生成报告</li>
+      <li>🎯 <strong>客服 Agent</strong>：查订单、处理退款、答疑解惑</li>
+      <li>📅 <strong>日程 Agent</strong>：安排会议、发提醒、管理日历</li>
+    </ul>
+
+    <div class="quiz-box">
+      <div class="quiz-q">❓ 小测验：以下哪个是 AI Agent 的行为？</div>
+      <button class="quiz-o" onclick="quiz(this,false)">A. 用 ChatGPT 写一首诗</button>
+      <button class="quiz-o" onclick="quiz(this,false)">B. 让 AI 翻译一段文字</button>
+      <button class="quiz-o" onclick="quiz(this,true)">C. 让 AI 自动搜索机票、比较价格、完成预订</button>
+      <button class="quiz-o" onclick="quiz(this,false)">D. 用 AI 生成一张图片</button>
+      <div class="quiz-res"></div>
+    </div>
+
+    <div class="prompt-tips">
+      <div class="pt-header"><span class="pt-icon">🤖</span><span class="pt-title">用 AI 实现时，这样描述更精准</span><span class="pt-sub">复制给 Cursor / Claude Code</span></div>
+      <div class="pt-item">
+        <div class="pt-label">定义需求</div>
+        <div class="pt-text">帮我构建一个 AI Agent，它需要：LLM 作为大脑负责决策、至少两个可调用的工具、一个 while 循环持续运行直到任务完成。不要用 LangChain，直接调用 Anthropic API。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+      <div class="pt-item">
+        <div class="pt-label">区分边界</div>
+        <div class="pt-text">这个 Agent 和普通 ChatGPT 对话的区别是：它能主动调用外部工具执行操作，而不只是返回文字。请在代码注释里标注哪部分是 LLM 决策、哪部分是工具执行。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(0)">← 上一章</button>
+    <button class="btn btn-primary" onclick="goTo(2)">下一章 →</button>
+  </div>
+</div>
+
+<!-- ══════════ CH 2: 语言选择 ══════════ -->
+<div class="ch-page" id="ch-2">
+  <div class="ch-hero">
+    <div class="ch-tag">CHAPTER 02 · ENVIRONMENT</div>
+    <h2>🐍 Python vs TypeScript，选哪个？</h2>
+    <p>不需要先精通一门语言。我们对比两者，帮你做出最适合自己的选择。</p>
+  </div>
+  <div class="ch-body">
+    <h3>两种语言的本质区别</h3>
+    <p>编程语言就像不同"方言"——都能和计算机沟通，语法不同，擅长领域不同。</p>
+
+    <table class="ctable">
+      <tr><th>对比维度</th><th>🐍 Python</th><th>📘 TypeScript / JavaScript</th></tr>
+      <tr><td><strong>语法难度</strong></td><td><span class="badge badge-g">简单</span> 接近自然语言</td><td><span class="badge badge-o">中等</span> 符号更多</td></tr>
+      <tr><td><strong>AI/ML 生态</strong></td><td><span class="badge badge-g">最丰富</span> AI 库首选</td><td><span class="badge badge-p">良好</span> 适合全栈</td></tr>
+      <tr><td><strong>初学者友好度</strong></td><td><span class="badge badge-g">非常高</span></td><td><span class="badge badge-o">中等</span></td></tr>
+      <tr><td><strong>适合场景</strong></td><td>数据处理、AI 开发、自动化脚本</td><td>Web 应用、前端 + 后端全栈</td></tr>
+      <tr><td><strong>Anthropic SDK</strong></td><td><span class="badge badge-g">完整支持</span></td><td><span class="badge badge-g">完整支持</span></td></tr>
+      <tr><td><strong>推荐人群</strong></td><td>初学者、AI 研究者</td><td>已有前端经验的开发者</td></tr>
+    </table>
+
+    <div class="callout callout-success"><strong>结论：本课程推荐 Python 🐍</strong> — 语法更简洁，AI 库最丰富，掌握原理后迁移到 TypeScript 也很容易。</div>
+
+    <h3>代码对比（逐行解析）</h3>
+    <p>同样的功能，两种语言写法不同。下面左右对比，标出每一处差异的原因：</p>
+
+    <!-- 并排对比 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.06);margin:16px 0">
+      <div style="background:var(--bg);padding:10px 14px;font-size:10px;font-weight:700;letter-spacing:1px;color:var(--lime);border-bottom:1px solid rgba(255,255,255,0.06)">🐍 PYTHON · main.py</div>
+      <div style="background:var(--bg);padding:10px 14px;font-size:10px;font-weight:700;letter-spacing:1px;color:#60A5FA;border-bottom:1px solid rgba(255,255,255,0.06)">📘 TYPESCRIPT · main.ts</div>
+      <!-- 行1: import -->
+      <div style="background:#080808;padding:14px 14px 6px;font-family:var(--mono);font-size:12.5px;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <span class="kw">import</span> anthropic
+      </div>
+      <div style="background:#080808;padding:14px 14px 6px;font-family:var(--mono);font-size:12.5px;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <span class="kw">import</span> Anthropic <span class="kw">from</span> <span class="st">"@anthropic-ai/sdk"</span>;
+      </div>
+      <!-- 差异说明 1 -->
+      <div style="background:rgba(184,255,0,0.03);padding:6px 14px 12px;font-size:11.5px;color:var(--text-3);border-bottom:1px solid rgba(255,255,255,0.06)">
+        ↳ 直接 <code>import 包名</code>，简洁
+      </div>
+      <div style="background:rgba(96,165,250,0.03);padding:6px 14px 12px;font-size:11.5px;color:var(--text-3);border-bottom:1px solid rgba(255,255,255,0.06)">
+        ↳ 需要写 <code>from "包名"</code>，指定来源；<code>;</code> 是 TS 语句结束符
+      </div>
+      <!-- 行2: 创建客户端 -->
+      <div style="background:#080808;padding:14px 14px 6px;font-family:var(--mono);font-size:12.5px;border-bottom:1px solid rgba(255,255,255,0.04)">
+        client = anthropic.<span class="cl">Anthropic</span>(api_key=<span class="st">"..."</span>)
+      </div>
+      <div style="background:#080808;padding:14px 14px 6px;font-family:var(--mono);font-size:12.5px;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <span class="kw">const</span> client = <span class="kw">new</span> <span class="cl">Anthropic</span>({ apiKey: <span class="st">"..."</span> });
+      </div>
+      <!-- 差异说明 2 -->
+      <div style="background:rgba(184,255,0,0.03);padding:6px 14px 12px;font-size:11.5px;color:var(--text-3);border-bottom:1px solid rgba(255,255,255,0.06)">
+        ↳ 变量直接赋值，无需声明类型
+      </div>
+      <div style="background:rgba(96,165,250,0.03);padding:6px 14px 12px;font-size:11.5px;color:var(--text-3);border-bottom:1px solid rgba(255,255,255,0.06)">
+        ↳ <code>const</code> 声明常量；<code>new</code> 表示"新建一个对象"；参数用 <code>{ }</code> 包裹
+      </div>
+      <!-- 行3: 发送消息 -->
+      <div style="background:#080808;padding:14px 14px 6px;font-family:var(--mono);font-size:12.5px;line-height:1.7;border-bottom:1px solid rgba(255,255,255,0.04)">
+        message = client.messages.create(<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;model=<span class="st">"claude-opus-4-5"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;max_tokens=<span class="nu">1024</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;messages=[{...}]<br>
+        )
+      </div>
+      <div style="background:#080808;padding:14px 14px 6px;font-family:var(--mono);font-size:12.5px;line-height:1.7;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <span class="kw">const</span> message = <span class="kw">await</span> client.messages.create({<br>
+        &nbsp;&nbsp;model: <span class="st">"claude-opus-4-5"</span>,<br>
+        &nbsp;&nbsp;max_tokens: <span class="nu">1024</span>,<br>
+        &nbsp;&nbsp;messages: [{...}]<br>
+        });
+      </div>
+      <!-- 差异说明 3 -->
+      <div style="background:rgba(184,255,0,0.03);padding:6px 14px 12px;font-size:11.5px;color:var(--text-3);border-bottom:1px solid rgba(255,255,255,0.06)">
+        ↳ 参数用 <code>key=value</code> 格式；整体用 <code>( )</code> 包裹
+      </div>
+      <div style="background:rgba(96,165,250,0.03);padding:6px 14px 12px;font-size:11.5px;color:var(--text-3);border-bottom:1px solid rgba(255,255,255,0.06)">
+        ↳ <code>await</code> 是关键差异：TS 网络请求默认异步，必须等待结果；参数用 <code>{ }</code> 包裹
+      </div>
+      <!-- 行4: 输出 -->
+      <div style="background:#080808;padding:14px 14px 14px;font-family:var(--mono);font-size:12.5px">
+        <span class="kw">print</span>(message.content[<span class="nu">0</span>].text)
+      </div>
+      <div style="background:#080808;padding:14px 14px 14px;font-family:var(--mono);font-size:12.5px">
+        console.<span class="fn">log</span>(message.content[<span class="nu">0</span>].text);
+      </div>
+      <!-- 差异说明 4 -->
+      <div style="background:rgba(184,255,0,0.03);padding:6px 14px 12px;font-size:11.5px;color:var(--text-3)">
+        ↳ Python 内置 <code>print()</code>，直接用
+      </div>
+      <div style="background:rgba(96,165,250,0.03);padding:6px 14px 12px;font-size:11.5px;color:var(--text-3)">
+        ↳ TS/JS 用 <code>console.log()</code> 输出到控制台
+      </div>
+    </div>
+
+    <!-- 核心差异总结 -->
+    <h4>THREE KEY DIFFERENCES</h4>
+    <div class="react-steps" style="max-width:100%">
+      <div class="rs rs-t" style="border-left-color:rgba(255,255,255,.2)">
+        <div class="ri">①</div>
+        <div>
+          <div class="rt">变量声明：Python 直接写，TS 要加 <code>const</code> / <code>let</code></div>
+          <div class="rd">Python 不需要声明变量类型，直接 <code>x = 1</code> 就行。TS 必须先声明 <code>const x = 1</code>，更严格但也更安全。</div>
+        </div>
+      </div>
+      <div class="rs rs-a">
+        <div class="ri">②</div>
+        <div>
+          <div class="rt">异步处理：TS 需要 <code>await</code>，Python 默认同步</div>
+          <div class="rd">调用 API 需要等网络返回结果。Python 默认"等完再继续"（同步），TS 默认"边等边做其他事"（异步），所以必须写 <code>await</code> 告诉它"在这里等一下"。</div>
+        </div>
+      </div>
+      <div class="rs rs-o">
+        <div class="ri">③</div>
+        <div>
+          <div class="rt">符号习惯：TS 多了 <code>;</code> <code>{ }</code> <code>new</code> 等符号</div>
+          <div class="rd">TS 继承自 C 语言家族，语句结尾要加 <code>;</code>，创建对象要加 <code>new</code>，参数对象用 <code>{ }</code> 包裹。Python 去掉了大部分这类符号，读起来更接近英文。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-success"><strong>结论：本课程推荐 Python 🐍</strong> — 语法更简洁，AI 库最丰富，掌握原理后迁移到 TypeScript 也很容易。</div>
+
+    <div class="prompt-tips">
+      <div class="pt-header"><span class="pt-icon">🤖</span><span class="pt-title">用 AI 实现时，这样描述更精准</span><span class="pt-sub">复制给 Cursor / Claude Code</span></div>
+      <div class="pt-item">
+        <div class="pt-label">初始化项目</div>
+        <div class="pt-text">用 Python 初始化一个 Agent 项目，依赖只需要 anthropic 库。创建 main.py 和 requirements.txt，main.py 里引入 anthropic 并初始化 client = anthropic.Anthropic()。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+      <div class="pt-item">
+        <div class="pt-label">设置环境</div>
+        <div class="pt-text">帮我生成一个 .env.example 文件，包含 ANTHROPIC_API_KEY 变量，并在 README 里说明如何通过 export 命令设置环境变量，不要把 Key 写进代码。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(1)">← 上一章</button>
+    <button class="btn btn-primary" onclick="goTo(3)">下一章 →</button>
+  </div>
+</div>
+
+<!-- ══════════ CH 3: LLM 基础 ══════════ -->
+<div class="ch-page" id="ch-3">
+  <div class="ch-hero">
+    <div class="ch-tag">CHAPTER 03 · LLM BASICS</div>
+    <h2>🧠 大语言模型是什么？</h2>
+    <p>Agent 的大脑是 LLM。理解它的工作方式，能帮你写出更好的 Agent。</p>
+  </div>
+  <div class="ch-body" id="ch3-body">
+
+    <!-- 本章知识路径 -->
+    <div style="border:1px solid rgba(255,255,255,0.08);margin-bottom:36px;background:rgba(255,255,255,0.02);">
+      <div style="padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-3)">本章知识路径 — 6 个概念依次递进</div>
+      <div style="display:flex;align-items:stretch;overflow-x:auto;">
+        <div class="lp-node" onclick="document.getElementById('s3-1').scrollIntoView({behavior:'smooth',block:'start'})">
+          <div class="lp-num">01</div>
+          <div class="lp-title">工作原理</div>
+          <div class="lp-sub">预测下一个词是怎么回事</div>
+        </div>
+        <div class="lp-arrow">→</div>
+        <div class="lp-node" onclick="document.getElementById('s3-2').scrollIntoView({behavior:'smooth',block:'start'})">
+          <div class="lp-num">02</div>
+          <div class="lp-title">Token 计量</div>
+          <div class="lp-sub">LLM 按什么单位计费</div>
+        </div>
+        <div class="lp-arrow">→</div>
+        <div class="lp-node" onclick="document.getElementById('s3-3').scrollIntoView({behavior:'smooth',block:'start'})">
+          <div class="lp-num">03</div>
+          <div class="lp-title">System Prompt</div>
+          <div class="lp-sub">给 LLM 的指令怎么写</div>
+        </div>
+        <div class="lp-arrow">→</div>
+        <div class="lp-node" onclick="document.getElementById('s3-4').scrollIntoView({behavior:'smooth',block:'start'})">
+          <div class="lp-num">04</div>
+          <div class="lp-title">第一个 API 调用</div>
+          <div class="lp-sub">用代码真正调用一次</div>
+        </div>
+        <div class="lp-arrow">→</div>
+        <div class="lp-node" onclick="document.getElementById('s3-5').scrollIntoView({behavior:'smooth',block:'start'})">
+          <div class="lp-num">05</div>
+          <div class="lp-title">多轮对话</div>
+          <div class="lp-sub">让 LLM 记住上下文</div>
+        </div>
+        <div class="lp-arrow">→</div>
+        <div class="lp-node" onclick="document.getElementById('s3-6').scrollIntoView({behavior:'smooth',block:'start'})">
+          <div class="lp-num">06</div>
+          <div class="lp-title">模型选择</div>
+          <div class="lp-sub">Agent 该用哪个模型</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="s3-1">工作原理（超简版）</h3>
+    <p>LLM 是在海量文本上训练的神经网络。核心能力只有一件事：<strong>根据给定文字，预测下一个最合理的词</strong>。</p>
+
+    <div class="diag-box">
+      <h4>LLM PROCESSING PIPELINE</h4>
+      <div class="arch-flow">
+        <div class="arch-box" style="border-color:rgba(0,217,255,.35);background:rgba(0,217,255,.05)">👤 输入文字 — <em style="color:var(--text-3)">"今天天气怎么样？"</em></div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-box" style="border-color:rgba(234,179,8,.3);background:rgba(234,179,8,.04)">🔤 Tokenizer — 文字切分为 Token（词片段）</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-box" style="border-color:rgba(147,51,234,.45);background:rgba(147,51,234,.08)">🧠 Transformer 神经网络 — 数千亿参数处理</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-box" style="border-color:rgba(0,255,176,.3);background:rgba(0,255,176,.04)">✉️ 输出 — <em style="color:var(--text-3)">"我无法查天气，但可以…"</em></div>
+      </div>
+    </div>
+
+    <h3 id="s3-2">关键概念：Token</h3>
+    <p>LLM 不按"字"处理，而是按 <strong>Token</strong>（词片段）处理。</p>
+    <ul>
+      <li>英文："Hello world" ≈ 2 个 Token</li>
+      <li>中文："你好世界" ≈ 4–6 个 Token</li>
+      <li>Token 越多，处理越慢、费用越高</li>
+    </ul>
+    <div class="callout callout-tip"><strong>Token = 费用和速度的关键。</strong>Claude 计费单位就是 Token，输入 + 输出 Token 总量决定 API 调用成本。</div>
+
+    <h4>中文开发者注意：中文比英文更贵</h4>
+    <p>Tokenizer 基于英文语料训练，中文没有天然词边界，汉字往往一字一 token，导致同样意思的中文比英文消耗多 <strong>2–3 倍</strong> token。</p>
+    <table class="ctable">
+      <tr><th>内容</th><th>文字数</th><th>Token 数</th><th>成本倍数</th></tr>
+      <tr><td><code>"You are a helpful assistant."</code></td><td>30 字符</td><td>≈ 6 tokens</td><td>基准</td></tr>
+      <tr><td><code>"你是一个有用的助手。"</code></td><td>9 个字</td><td>≈ 11 tokens</td><td><span class="badge badge-o">约 1.8×</span></td></tr>
+    </table>
+    <div class="callout callout-warn">
+      <strong>实用省钱技巧：</strong>
+      <ul style="margin:8px 0 0 16px">
+        <li><strong>System Prompt 用英文写</strong>——模型理解没问题，但 token 少得多</li>
+        <li><strong>工具的 description 用英文</strong>——每次调用都会发送，积少成多</li>
+        <li><strong>用户对话该用中文就用中文</strong>——用户体验优先，成本影响有限</li>
+      </ul>
+    </div>
+
+    <h3 id="s3-3">System Prompt vs User Message</h3>
+    <p>调用 LLM API 时，你发送的不是一条消息，而是一个<strong>结构化的输入包</strong>，里面有两类完全不同用途的内容。搞清楚这两类，是写 Agent 的基本功。</p>
+
+    <!-- 对比图：两个角色 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;border:1px solid rgba(255,255,255,0.08);margin:20px 0;">
+      <div style="background:var(--bg);padding:20px 24px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--lime);margin-bottom:10px">SYSTEM PROMPT — 开发者写，用户看不到</div>
+        <p style="font-size:13px;color:var(--text-2);margin:0 0 12px">在 API 调用里用 <code>system=</code> 字段传入。<strong>每次对话都会生效</strong>，相当于给 LLM 预设好角色和行为规则。</p>
+        <div style="background:rgba(184,255,0,.05);border-left:2px solid var(--lime);padding:10px 14px;font-size:12px;color:var(--text-2)">
+          👉 <strong>Agent 开发中，System Prompt 就是你"定义这个 Agent 是什么"的地方</strong>：它能做什么、不能做什么、用什么语气、调用哪些工具。
+        </div>
+      </div>
+      <div style="background:var(--bg);padding:20px 24px;border-left:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-3);margin-bottom:10px">USER MESSAGE — 用户发，每次不同</div>
+        <p style="font-size:13px;color:var(--text-2);margin:0 0 12px">在 <code>messages=[{"role":"user",...}]</code> 里传入。是运行时用户实际输入的内容，每次请求都可以不同。</p>
+        <div style="background:rgba(255,255,255,.03);border-left:2px solid rgba(255,255,255,.15);padding:10px 14px;font-size:12px;color:var(--text-2)">
+          👉 <strong>Agent 开发中，User Message 是用户当前这一轮的请求</strong>：可以是问题、指令、或者要处理的数据。
+        </div>
+      </div>
+    </div>
+
+    <!-- 真实代码结构 -->
+    <p style="margin-top:20px">在 API 里，它们长这样：</p>
+    <div class="code-wrap" style="margin-bottom:8px">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">api_structure.py</div></div>
+      <pre><span class="cm"># ① System Prompt 单独定义，避免多行缩进混乱（真实项目常见写法）</span>
+SYSTEM_PROMPT = <span class="st">"你是一个天气查询助手。"</span> \
+               <span class="st">"只回答天气相关的问题，其他话题拒绝回答。"</span> \
+               <span class="st">"用简洁的中文回复，不超过 3 句话。"</span>
+
+<span class="cm"># ② 调用 API，传入 system 和 messages 两个字段</span>
+client.messages.create(
+    model=<span class="st">"claude-opus-4-5"</span>,
+    max_tokens=<span class="nu">1024</span>,   <span class="cm"># 必填：限制回复最多用多少 Token</span>
+    system=SYSTEM_PROMPT,
+    messages=[
+        {<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: <span class="st">"上海今天天气怎么样？"</span>}
+    ]
+)</pre>
+    </div>
+    <div class="callout callout-tip" style="margin-top:0">
+      <strong>关键理解：</strong>System Prompt 决定 Agent 的<em>性格和能力边界</em>，User Message 是 Agent 每次<em>实际处理的任务</em>。两者分离，让你能用同一套 LLM 搭出行为完全不同的多个 Agent。
+    </div>
+
+    <h3 id="s3-4">第一个 API 调用</h3>
+    <p>前两节讲了 Token 和消息结构，现在把它们组合起来，<strong>真正写一次代码调用 LLM</strong>，看看从发送请求到拿到回复的完整流程。</p>
+
+    <!-- 步骤说明 -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;border:1px solid rgba(255,255,255,0.08);margin-bottom:20px;background:rgba(255,255,255,0.06);">
+      <div style="background:var(--bg);padding:16px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--lime);margin-bottom:6px">STEP 1</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">初始化客户端</div>
+        <div style="font-size:12px;color:var(--text-3)">读取 API Key，建立与 Anthropic 服务器的连接</div>
+      </div>
+      <div style="background:var(--bg);padding:16px 18px;border-left:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--lime);margin-bottom:6px">STEP 2</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">发送请求</div>
+        <div style="font-size:12px;color:var(--text-3)">传入模型名、Token 上限、System Prompt 和用户消息</div>
+      </div>
+      <div style="background:var(--bg);padding:16px 18px;border-left:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--lime);margin-bottom:6px">STEP 3</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">读取回复</div>
+        <div style="font-size:12px;color:var(--text-3)">从 response 对象取出 LLM 生成的文字</div>
+      </div>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">hello_llm.py</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre><span class="cm"># STEP 1：初始化客户端（自动读取环境变量 ANTHROPIC_API_KEY）</span>
+<span class="kw">import</span> anthropic
+client = anthropic.<span class="cl">Anthropic</span>()
+
+<span class="cm"># STEP 2：发送请求给 LLM</span>
+response = client.messages.create(
+    model=<span class="st">"claude-opus-4-5"</span>,          <span class="cm"># 使用哪个模型</span>
+    max_tokens=<span class="nu">1024</span>,                  <span class="cm"># 回复最多 1024 个 Token（必填）</span>
+    system=<span class="st">"你是一个专业的助手，用中文简洁回答。"</span>,  <span class="cm"># 定义角色</span>
+    messages=[
+        {<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: <span class="st">"什么是人工智能？用三句话解释。"</span>}
+    ]
+)
+
+<span class="cm"># STEP 3：取出 LLM 的回复文字</span>
+<span class="kw">print</span>(response.content[<span class="nu">0</span>].text)</pre>
+    </div>
+
+    <!-- 输出结果示例 -->
+    <div style="margin-top:4px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);">
+      <div style="padding:8px 14px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--text-3)">运行输出（示例）</div>
+      <div style="padding:14px 18px;font-family:var(--mono);font-size:13px;color:var(--text-2);line-height:1.7">
+        人工智能是让计算机模拟人类智能行为的技术领域。<br>
+        它通过学习大量数据，让机器能够识别图像、理解语言、做出决策。<br>
+        目前广泛应用于语音助手、推荐算法、自动驾驶等场景。
+      </div>
+    </div>
+    <div style="border:1px solid rgba(255,255,255,0.08);margin-top:12px;background:rgba(255,255,255,0.02);">
+      <div style="padding:8px 14px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--text-3)">各家 SDK 取回复文字的写法不同</div>
+      <table class="ctable" style="margin:0;border:none;">
+        <tr><th>SDK</th><th>取出回复文字的代码</th></tr>
+        <tr>
+          <td><span style="color:var(--lime)">Anthropic</span></td>
+          <td><code>response.content[0].text</code></td>
+        </tr>
+        <tr>
+          <td>OpenAI</td>
+          <td><code>response.choices[0].message.content</code></td>
+        </tr>
+        <tr>
+          <td>Google Gemini</td>
+          <td><code>response.text</code></td>
+        </tr>
+      </table>
+      <div style="padding:10px 14px;font-size:12px;color:var(--text-3)">每家厂商的返回结构都是自己设计的，没有统一标准。换模型提供商时，这行取值代码需要跟着改。</div>
+    </div>
+
+    <h3 id="s3-5">多轮对话：让 LLM 记住上下文</h3>
+    <p>LLM 本身<strong>没有记忆</strong>，每次 API 调用都是独立的。要让它"记住"对话，需要把历史一起发过去：</p>
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">multi_turn.py</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre>messages = []  <span class="cm"># 存储对话历史</span>
+
+<span class="kw">def</span> <span class="fn">chat</span>(user_input):
+    messages.append({<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: user_input})
+    response = client.messages.create(
+        model=<span class="st">"claude-opus-4-5"</span>,
+        max_tokens=<span class="nu">1024</span>,
+        messages=messages  <span class="cm"># 每次都发送完整历史</span>
+    )
+    reply = response.content[<span class="nu">0</span>].text
+    messages.append({<span class="st">"role"</span>: <span class="st">"assistant"</span>, <span class="st">"content"</span>: reply})
+    <span class="kw">return</span> reply
+
+<span class="kw">print</span>(<span class="fn">chat</span>(<span class="st">"我叫小明"</span>))       <span class="cm"># "你好，小明！..."</span>
+<span class="kw">print</span>(<span class="fn">chat</span>(<span class="st">"我叫什么名字？"</span>))  <span class="cm"># "你叫小明。"（记住了！）</span></pre>
+    </div>
+
+    <!-- 历史记录的两个限制 -->
+    <div style="border:1px solid rgba(255,100,100,0.2);background:rgba(255,80,80,0.04);margin:16px 0;padding:18px 20px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#ff6b6b;margin-bottom:14px">⚠️ 发送历史记录的两个关键限制</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">① 上下文窗口有上限</div>
+          <div style="font-size:12px;color:var(--text-2);line-height:1.7">每个模型能接受的 Token 总量有限（Claude claude-opus-4-5 是 200K Token）。对话轮数越多，历史越长，超过上限后 API 会报错。<br><br>
+          <strong style="color:var(--text)">应对方法：</strong>只保留最近 N 轮，或把旧对话压缩成摘要。</div>
+        </div>
+        <div style="border-left:1px solid rgba(255,255,255,0.07);padding-left:16px;">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">② 每轮费用递增</div>
+          <div style="font-size:12px;color:var(--text-2);line-height:1.7">你每次都把<em>完整历史</em>发过去，意味着第 10 轮的 API 调用要付前 9 轮对话的 Token 费用。对话越长，单次调用越贵。<br><br>
+          <strong style="color:var(--text)">应对方法：</strong>长会话场景要做历史裁剪，避免无限增长。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-box">
+      <div class="quiz-q">❓ 小测验：LLM 为什么需要把对话历史一起发送？</div>
+      <button class="quiz-o" onclick="quiz(this,false)">A. 因为网络传输需要完整数据包</button>
+      <button class="quiz-o" onclick="quiz(this,true)">B. 因为 LLM 本身没有记忆，每次调用都是全新的</button>
+      <button class="quiz-o" onclick="quiz(this,false)">C. 因为 API 有特殊要求</button>
+      <button class="quiz-o" onclick="quiz(this,false)">D. 以上都不对</button>
+      <div class="quiz-res"></div>
+    </div>
+
+    <h3 id="s3-6">模型选择与 Agent 适配</h3>
+    <p>选什么模型，直接决定 Agent 能不能正常工作——而不只是"快一点慢一点"的差别。市面上主流模型来自不同厂商，能力侧重各不相同。</p>
+
+    <h4>影响 AGENT 的四个核心模型能力</h4>
+    <div class="card-grid">
+      <div class="card">
+        <div class="ci">🔧</div>
+        <div class="ct">工具调用可靠性</div>
+        <div class="cd">能否稳定选对工具、正确填写参数。弱模型会漏参数或调错工具，导致 Agent 循环崩溃。</div>
+      </div>
+      <div class="card">
+        <div class="ci">📐</div>
+        <div class="ct">上下文窗口大小</div>
+        <div class="cd">决定 Agent 一次能"看到"多长的历史和工具结果，直接限制记忆系统的设计上限。</div>
+      </div>
+      <div class="card">
+        <div class="ci">📋</div>
+        <div class="ct">指令遵循能力</div>
+        <div class="cd">System Prompt 写得再好，模型不遵守等于白写。弱模型常常忽略约束或格式要求。</div>
+      </div>
+      <div class="card">
+        <div class="ci">🗺️</div>
+        <div class="ct">多步推理深度</div>
+        <div class="cd">复杂任务规划需要足够强的推理能力。弱模型面对多步骤时容易走弯路甚至死循环。</div>
+      </div>
+    </div>
+
+    <h4>主流模型厂商横向对比（AGENT 视角）</h4>
+    <p>不同厂商的模型在 Agent 开发中各有侧重，选型前先了解它们的差异：</p>
+    <table class="ctable">
+      <tr><th>厂商 / 系列</th><th>代表模型</th><th>工具调用</th><th>上下文</th><th>推理能力</th><th>特点与适用场景</th></tr>
+      <tr>
+        <td><strong>Anthropic</strong><br><span style="font-size:11px;color:var(--text-3)">Claude 系列</span></td>
+        <td><code>claude-opus-4-5</code><br><code>claude-sonnet-4-5</code></td>
+        <td><span class="badge badge-g">极强</span></td>
+        <td>200K</td>
+        <td><span class="badge badge-g">顶级</span></td>
+        <td>指令遵循极佳，长上下文稳定，Agent 开发首选；安全性设计完善</td>
+      </tr>
+      <tr>
+        <td><strong>OpenAI</strong><br><span style="font-size:11px;color:var(--text-3)">GPT / o 系列</span></td>
+        <td><code>gpt-4o</code><br><code>o3</code><br><code>o4-mini</code></td>
+        <td><span class="badge badge-g">极强</span></td>
+        <td>128K</td>
+        <td><span class="badge badge-g">顶级</span></td>
+        <td>工具调用成熟稳定，生态最丰富；o 系列擅长数学/代码推理任务</td>
+      </tr>
+      <tr>
+        <td><strong>Google</strong><br><span style="font-size:11px;color:var(--text-3)">Gemini 系列</span></td>
+        <td><code>gemini-2.5-pro</code><br><code>gemini-2.5-flash</code></td>
+        <td><span class="badge badge-g">强</span></td>
+        <td>1M</td>
+        <td><span class="badge badge-g">顶级</span></td>
+        <td>上下文窗口最长（1M token），多模态原生支持；适合需要处理超长文档的 Agent</td>
+      </tr>
+      <tr>
+        <td><strong>Meta</strong><br><span style="font-size:11px;color:var(--text-3)">Llama 系列</span></td>
+        <td><code>llama-3.3-70b</code><br><code>llama-3.1-8b</code></td>
+        <td><span class="badge badge-o">中等</span></td>
+        <td>128K</td>
+        <td><span class="badge badge-o">中等</span></td>
+        <td>开源可本地部署，数据不出境；工具调用稳定性弱于闭源模型，适合隐私敏感场景</td>
+      </tr>
+      <tr>
+        <td><strong>DeepSeek</strong><br><span style="font-size:11px;color:var(--text-3)">DeepSeek 系列</span></td>
+        <td><code>deepseek-r1</code><br><code>deepseek-v3</code></td>
+        <td><span class="badge badge-o">中等</span></td>
+        <td>128K</td>
+        <td><span class="badge badge-g">强</span></td>
+        <td>成本极低，代码和推理能力突出；R1 系列有内置思维链，适合需要透明推理的 Agent</td>
+      </tr>
+    </table>
+
+    <h4>按场景选模型：决策树</h4>
+    <div class="diag-box">
+      <h4>MODEL SELECTION GUIDE</h4>
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:560px;margin:0 auto">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="background:rgba(0,217,255,.08);border:1px solid rgba(0,217,255,.3);border-radius:8px;padding:10px 14px;flex:1;font-size:12.5px">
+            <strong style="color:var(--cyan)">需要处理超长文档（&gt;100K token）？</strong><br>
+            <span style="color:var(--text-3)">→ Gemini 2.5 Pro（百万上下文）</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="background:rgba(147,51,234,.07);border:1px solid rgba(147,51,234,.3);border-radius:8px;padding:10px 14px;flex:1;font-size:12.5px">
+            <strong style="color:#ffffff">数据隐私要求高，不能用云端 API？</strong><br>
+            <span style="color:var(--text-3)">→ Llama 3（本地部署）</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:10px 14px;flex:1;font-size:12.5px">
+            <strong style="color:#FCD34D">核心任务是数学 / 代码推理？</strong><br>
+            <span style="color:var(--text-3)">→ OpenAI o3 / DeepSeek R1（深度推理模型）</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="background:rgba(0,255,176,.05);border:1px solid rgba(0,255,176,.25);border-radius:8px;padding:10px 14px;flex:1;font-size:12.5px">
+            <strong style="color:var(--lime)">通用 Agent，追求可靠性与指令遵循？</strong><br>
+            <span style="color:var(--text-3)">→ Claude Sonnet / Opus、GPT-4o（综合最强）</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="background:rgba(0,217,255,.04);border:1px solid rgba(0,217,255,.15);border-radius:8px;padding:10px 14px;flex:1;font-size:12.5px">
+            <strong style="color:var(--text-2)">高频调用、成本敏感的执行节点？</strong><br>
+            <span style="color:var(--text-3)">→ Claude Haiku / GPT-4o mini / DeepSeek V3（轻量快速）</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h4>Claude 系列内部对比</h4>
+    <table class="ctable">
+      <tr><th>模型</th><th>定位</th><th>工具调用</th><th>相对成本</th><th>适合场景</th></tr>
+      <tr>
+        <td><strong>claude-opus-4-5</strong></td>
+        <td><span class="badge badge-p">旗舰</span></td>
+        <td><span class="badge badge-g">最强</span></td>
+        <td>高</td>
+        <td>复杂多步骤 Agent、多 Agent 编排者</td>
+      </tr>
+      <tr>
+        <td><strong>claude-sonnet-4-5</strong></td>
+        <td><span class="badge badge-c">均衡</span></td>
+        <td><span class="badge badge-g">强</span></td>
+        <td>中</td>
+        <td>生产级 Agent 首选，性能与成本最佳平衡</td>
+      </tr>
+      <tr>
+        <td><strong>claude-haiku-4-5</strong></td>
+        <td><span class="badge badge-o">轻量</span></td>
+        <td><span class="badge badge-o">中等</span></td>
+        <td>低</td>
+        <td>简单工具调用、高频低成本执行节点</td>
+      </tr>
+    </table>
+
+    <h4>生产常用策略：强模型规划 + 弱模型执行</h4>
+    <p>不同步骤对模型能力要求不同——任务规划需要强推理，简单执行用轻量模型即可，组合使用可大幅降低成本：</p>
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">model_routing.py</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre><span class="cm"># 旗舰模型：负责理解任务、规划步骤（复杂推理）</span>
+plan_client = anthropic.<span class="cl">Anthropic</span>()
+plan = plan_client.messages.create(
+    model=<span class="st">"claude-opus-4-5"</span>,   <span class="cm"># 强模型规划</span>
+    messages=[{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: <span class="st">f"把以下任务分解为步骤：{task}"</span>}]
+)
+
+<span class="cm"># 轻量模型：负责逐步执行（重复性工具调用）</span>
+exec_client = anthropic.<span class="cl">Anthropic</span>()
+<span class="kw">for</span> step <span class="kw">in</span> parse_steps(plan):
+    result = exec_client.messages.create(
+        model=<span class="st">"claude-haiku-4-5"</span>,  <span class="cm"># 弱模型执行，成本更低</span>
+        tools=TOOLS,
+        messages=[{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: step}]
+    )</pre>
+    </div>
+
+    <div class="callout callout-warn"><strong>初学阶段的建议：</strong>本课程统一使用 <code>claude-opus-4-5</code> 学习，确保工具调用行为稳定、易于观察。理解原理后再根据成本需求切换模型。不要在学习阶段因为节省 Token 而用弱模型，容易误判是代码的 Bug 而非模型能力不足。</div>
+
+    <div class="prompt-tips">
+      <div class="pt-header"><span class="pt-icon">🤖</span><span class="pt-title">用 AI 实现时，这样描述更精准</span><span class="pt-sub">复制给 Cursor / Claude Code</span></div>
+      <div class="pt-item">
+        <div class="pt-label">API 调用</div>
+        <div class="pt-text">帮我用 Anthropic Python SDK 写一个 LLM 调用函数：用 client.messages.create()，参数包括 model、max_tokens（必填）、system（System Prompt）、messages 列表。返回 response.content[0].text。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+      <div class="pt-item">
+        <div class="pt-label">多轮对话</div>
+        <div class="pt-text">帮我实现多轮对话管理：用一个 messages 列表存历史，每次调用前 append {"role":"user","content":...}，收到回复后再 append {"role":"assistant","content":...}，每次都把完整列表发给 API。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+      <div class="pt-item">
+        <div class="pt-label">Token 控制</div>
+        <div class="pt-text">帮我给多轮对话加上 Token 历史截断：当 messages 超过 20 条时，保留前 1 条（初始系统消息）和最近 10 条，避免上下文窗口溢出。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(2)">← 上一章</button>
+    <button class="btn btn-primary" onclick="goTo(4)">下一章 →</button>
+  </div>
+</div>
+
+<!-- ══════════ CH 4: 工具调用 ══════════ -->
+<div class="ch-page" id="ch-4">
+  <div class="ch-hero">
+    <div class="ch-tag">CHAPTER 04 · FUNCTION CALLING</div>
+    <h2>🔧 工具调用（Function Calling）</h2>
+    <p>这是 Agent 最核心的技术！让 AI 不只会"说"，还能真正"做"——调用函数、操控真实系统。</p>
+  </div>
+  <div class="ch-body">
+    <h3>工作流程</h3>
+    <div class="diag-box">
+      <h4>TOOL USE PIPELINE</h4>
+      <div class="arch-flow">
+        <div class="arch-box" style="border-color:rgba(0,217,255,.35);background:rgba(0,217,255,.05)">👤 用户："上海现在几度？"</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-box" style="border-color:rgba(147,51,234,.4);background:rgba(147,51,234,.07)">🧠 LLM 决策：需要调用 <code>get_weather</code> 工具</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-box" style="border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.05)">⚡ <strong>你的代码</strong>：执行 <code>get_weather("上海")</code></div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-box" style="border-color:rgba(147,51,234,.4);background:rgba(147,51,234,.07)">🧠 LLM 综合工具结果，生成最终回答</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-box" style="border-color:rgba(0,255,176,.3);background:rgba(0,255,176,.04)">✅ "上海现在 28°C，晴天"</div>
+      </div>
+    </div>
+
+    <div class="callout callout-tip"><strong>所有 LLM 都是这样，不只是 Claude：</strong>任何大语言模型本质上只能输出文字。"调用工具"的意思是 LLM 在回复里写下"我想用这个工具、传这些参数"——真正执行函数、拿到结果的永远是你的代码。LLM 没有直接操控任何东西的能力，你的程序才是执行者。</div>
+
+    <!-- 两部分的关系说明 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;border:1px solid rgba(255,255,255,0.08);margin-bottom:28px;background:rgba(255,255,255,0.06);">
+      <div style="background:var(--bg);padding:18px 20px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--lime);margin-bottom:8px">PART 1 · 工具定义（给 LLM 看）</div>
+        <p style="font-size:13px;color:var(--text-2);margin:0">一份 JSON 格式的"菜单"，告诉 LLM <strong>有哪些工具可以用</strong>、每个工具需要传什么参数。LLM 根据这份菜单决策，它只能看到这里。</p>
+      </div>
+      <div style="background:var(--bg);padding:18px 20px;border-left:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-3);margin-bottom:8px">PART 2 · 函数实现（你自己写，LLM 看不到）</div>
+        <p style="font-size:13px;color:var(--text-2);margin:0">当 LLM 说"我要调用这个工具"后，<strong>你的代码</strong>负责真正执行。这里才是实际发生的事情——查数据库、调接口、发邮件都在这里。</p>
+      </div>
+    </div>
+
+    <h3>Part 1：工具定义（菜单）</h3>
+    <p>这份 JSON 会通过 <code>tools=</code> 参数发送给 LLM，LLM 读完后才知道有哪些工具可以选择。注意三个字段的作用：</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;border:1px solid rgba(255,255,255,0.08);margin-bottom:14px;background:rgba(255,255,255,0.06);">
+      <div style="background:var(--bg);padding:12px 14px;"><code style="color:var(--lime);font-size:12px">name</code><div style="font-size:11px;color:var(--text-3);margin-top:4px">工具的唯一标识，LLM 用这个名字"呼叫"工具</div></div>
+      <div style="background:var(--bg);padding:12px 14px;border-left:1px solid rgba(255,255,255,0.08);"><code style="color:var(--lime);font-size:12px">description</code><div style="font-size:11px;color:var(--text-3);margin-top:4px">工具的用途说明——写得越清楚，LLM 选对工具的概率越高</div></div>
+      <div style="background:var(--bg);padding:12px 14px;border-left:1px solid rgba(255,255,255,0.08);"><code style="color:var(--lime);font-size:12px">input_schema</code><div style="font-size:11px;color:var(--text-3);margin-top:4px">需要哪些参数、每个参数是什么类型，LLM 按这个格式填写参数</div></div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">tools.py — 工具定义（LLM 能看到）</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre>tools = [
+    {
+        <span class="st">"name"</span>: <span class="st">"get_weather"</span>,             <span class="cm"># LLM 用这个名字呼叫工具</span>
+        <span class="st">"description"</span>: <span class="st">"获取指定城市的当前天气"</span>,  <span class="cm"># 越清晰，LLM 越容易选对</span>
+        <span class="st">"input_schema"</span>: {
+            <span class="st">"type"</span>: <span class="st">"object"</span>,
+            <span class="st">"properties"</span>: {
+                <span class="st">"city"</span>: {
+                    <span class="st">"type"</span>: <span class="st">"string"</span>,
+                    <span class="st">"description"</span>: <span class="st">"城市名，如 '上海'、'北京'"</span>
+                }
+            },
+            <span class="st">"required"</span>: [<span class="st">"city"</span>]           <span class="cm"># city 是必填参数</span>
+        }
+    },
+    {
+        <span class="st">"name"</span>: <span class="st">"send_email"</span>,
+        <span class="st">"description"</span>: <span class="st">"发送电子邮件"</span>,
+        <span class="st">"input_schema"</span>: {
+            <span class="st">"type"</span>: <span class="st">"object"</span>,
+            <span class="st">"properties"</span>: {
+                <span class="st">"to"</span>:      {<span class="st">"type"</span>: <span class="st">"string"</span>, <span class="st">"description"</span>: <span class="st">"收件人邮箱"</span>},
+                <span class="st">"subject"</span>: {<span class="st">"type"</span>: <span class="st">"string"</span>, <span class="st">"description"</span>: <span class="st">"邮件主题"</span>},
+                <span class="st">"body"</span>:    {<span class="st">"type"</span>: <span class="st">"string"</span>, <span class="st">"description"</span>: <span class="st">"邮件正文"</span>}
+            },
+            <span class="st">"required"</span>: [<span class="st">"to"</span>, <span class="st">"subject"</span>, <span class="st">"body"</span>]
+        }
+    }
+]</pre>
+    </div>
+
+    <h3>Part 2：函数实现（你来写，LLM 看不到）</h3>
+    <p>LLM 说完"我要调用 <code>get_weather</code>，参数是 <code>{"city": "上海"}</code>"之后，<strong>你的代码</strong>负责接收这个指令并真正执行。这里才是实际发生的事情：</p>
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">tools.py — 函数实现（你写的，LLM 看不到）</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre><span class="cm"># 这两个函数是实际"干活"的代码，可以接 API、查数据库、发邮件……</span>
+<span class="kw">def</span> <span class="fn">get_weather</span>(city: str) -> dict:
+    data = {
+        <span class="st">"上海"</span>: {<span class="st">"温度"</span>: <span class="st">"28°C"</span>, <span class="st">"天气"</span>: <span class="st">"晴天"</span>, <span class="st">"湿度"</span>: <span class="st">"65%"</span>},
+        <span class="st">"北京"</span>: {<span class="st">"温度"</span>: <span class="st">"22°C"</span>, <span class="st">"天气"</span>: <span class="st">"多云"</span>, <span class="st">"湿度"</span>: <span class="st">"45%"</span>},
+    }
+    <span class="kw">return</span> data.get(city, {<span class="st">"error"</span>: <span class="st">f"找不到 {city} 的数据"</span>})
+
+<span class="kw">def</span> <span class="fn">send_email</span>(to: str, subject: str, body: str) -> dict:
+    <span class="kw">print</span>(<span class="st">f"📧 发送邮件到: {to} | 主题: {subject}"</span>)
+    <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"success"</span>}
+
+<span class="cm"># 调度器：根据 LLM 给出的工具名，路由到对应的函数</span>
+<span class="kw">def</span> <span class="fn">execute_tool</span>(name: str, inputs: dict):
+    <span class="kw">if</span> name == <span class="st">"get_weather"</span>: <span class="kw">return</span> <span class="fn">get_weather</span>(**inputs)
+    <span class="kw">if</span> name == <span class="st">"send_email"</span>:   <span class="kw">return</span> <span class="fn">send_email</span>(**inputs)
+    <span class="kw">return</span> {<span class="st">"error"</span>: <span class="st">f"未知工具: {name}"</span>}</pre>
+    </div>
+    <div class="callout callout-tip" style="margin-top:4px">
+      <strong>execute_tool 的作用：</strong>LLM 返回的工具调用指令只有名字和参数（字符串），<code>execute_tool</code> 负责把名字映射到真实函数并执行。这是你控制权的体现——你可以在这里加权限校验、日志记录、错误处理。
+    </div>
+
+    <div class="quiz-box">
+      <div class="quiz-q">❓ 小测验：Claude 调用工具时，谁负责真正执行函数？</div>
+      <button class="quiz-o" onclick="quiz(this,false)">A. Claude 的服务器直接执行</button>
+      <button class="quiz-o" onclick="quiz(this,true)">B. 你写的代码（在本地执行）</button>
+      <button class="quiz-o" onclick="quiz(this,false)">C. Python 解释器自动识别</button>
+      <button class="quiz-o" onclick="quiz(this,false)">D. 工具描述里的 JSON</button>
+      <div class="quiz-res"></div>
+    </div>
+
+    <div class="prompt-tips">
+      <div class="pt-header"><span class="pt-icon">🤖</span><span class="pt-title">用 AI 实现时，这样描述更精准</span><span class="pt-sub">复制给 Cursor / Claude Code</span></div>
+      <div class="pt-item">
+        <div class="pt-label">定义工具</div>
+        <div class="pt-text">帮我定义一个 Anthropic 格式的工具 JSON Schema，包含 name（工具名）、description（越详细越好，这是 LLM 选择工具的依据）、input_schema（type:object, properties, required 字段）。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+      <div class="pt-item">
+        <div class="pt-label">工具调度</div>
+        <div class="pt-text">帮我写一个 execute_tool(name, inputs) 调度函数，根据工具名路由到对应的 Python 函数。在这里加入日志记录（打印工具名和参数），方便调试时观察 LLM 的选择。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+      <div class="pt-item">
+        <div class="pt-label">工具结果回传</div>
+        <div class="pt-text">帮我处理 Anthropic API 的 tool_use 响应：当 stop_reason == "tool_use" 时，遍历 response.content 找出 type=="tool_use" 的 block，执行工具后把结果以 {"type":"tool_result","tool_use_id":block.id,"content":...} 格式追加到 messages。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(3)">← 上一章</button>
+    <button class="btn btn-primary" onclick="goTo(5)">下一章 →</button>
+  </div>
+</div>
+
+<!-- ══════════ CH 5: Agent 循环 ══════════ -->
+<div class="ch-page" id="ch-5">
+  <div class="ch-hero">
+    <div class="ch-tag">CHAPTER 05 · AGENT LOOP</div>
+    <h2>🔄 Agent 循环：ReAct 框架</h2>
+    <p>单次 LLM 调用只能"想一次"——复杂任务需要多步推理、中途使用工具、根据结果调整方向。Agent 循环解决的正是这个问题：让 LLM 反复思考和行动，直到任务完成。</p>
+  </div>
+  <div class="ch-body">
+    <h3>ReAct = Reason + Act（推理 + 行动）</h3>
+    <div class="react-steps">
+      <div class="rs rs-t">
+        <div class="ri">🧠</div>
+        <div><div class="rt" style="color:#ffffff">THOUGHT — 思考</div><div class="rd">LLM 分析当前状态，决定下一步做什么<br><em>"我需要先查天气，再判断是否推荐带伞"</em></div></div>
+      </div>
+      <div class="rs-conn">↓</div>
+      <div class="rs rs-a">
+        <div class="ri">⚡</div>
+        <div><div class="rt" style="color:var(--cyan)">ACTION — 行动</div><div class="rd">调用工具，例如 <code>get_weather("北京")</code>，真实执行函数</div></div>
+      </div>
+      <div class="rs-conn">↓</div>
+      <div class="rs rs-o">
+        <div class="ri">👁️</div>
+        <div><div class="rt" style="color:var(--lime)">OBSERVATION — 观察</div><div class="rd">收集工具返回的结果，反馈给 LLM 继续思考</div></div>
+      </div>
+      <div class="rs-conn">↓ 循环，直到任务完成</div>
+    </div>
+
+    <h3>Agent 主循环代码</h3>
+    <p>下面这段代码是整个 Agent 的骨架。每一段都对应 ReAct 循环里的一个环节：</p>
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">agent_loop.py</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre><span class="kw">import</span> json
+<span class="kw">import</span> anthropic
+
+client = anthropic.<span class="cl">Anthropic</span>()
+
+<span class="kw">def</span> <span class="fn">run_agent</span>(user_message: str):
+    <span class="cm"># ① 初始化消息列表，放入用户的第一条消息</span>
+    messages = [{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: user_message}]
+    <span class="kw">print</span>(<span class="st">f"\n👤 用户: {user_message}\n"</span>)
+
+    <span class="kw">while True</span>:
+        <span class="cm"># ② 让 LLM "思考"：把当前所有消息发给 LLM，拿到它的决策</span>
+        response = client.messages.create(
+            model=<span class="st">"claude-opus-4-5"</span>,
+            max_tokens=<span class="nu">4096</span>,
+            tools=tools,      <span class="cm"># 告诉 LLM 有哪些工具可以调用</span>
+            messages=messages  <span class="cm"># 包含完整的对话历史 + 工具结果</span>
+        )
+
+        <span class="cm"># ③ LLM 决定调用工具（stop_reason = "tool_use"）</span>
+        <span class="kw">if</span> response.stop_reason == <span class="st">"tool_use"</span>:
+            results = []
+            <span class="kw">for</span> block <span class="kw">in</span> response.content:
+                <span class="kw">if</span> block.type == <span class="st">"tool_use"</span>:
+                    <span class="kw">print</span>(<span class="st">f"  🔧 {block.name}({block.input})"</span>)
+                    <span class="cm"># ④ 你的代码真正执行工具，拿到结果（OBSERVATION）</span>
+                    result = <span class="fn">execute_tool</span>(block.name, block.input)
+                    <span class="kw">print</span>(<span class="st">f"  ↳  {result}\n"</span>)
+                    results.append({
+                        <span class="st">"type"</span>: <span class="st">"tool_result"</span>,
+                        <span class="st">"tool_use_id"</span>: block.id,   <span class="cm"># 对应 LLM 发起的那次调用</span>
+                        <span class="st">"content"</span>: json.dumps(result, ensure_ascii=<span class="kw">False</span>)
+                    })
+            <span class="cm"># ⑤ 把 LLM 的决策和工具结果都追加进历史，下一轮 LLM 能看到</span>
+            messages.append({<span class="st">"role"</span>: <span class="st">"assistant"</span>, <span class="st">"content"</span>: response.content})
+            messages.append({<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: results})
+            <span class="cm"># ↑ 然后回到 while True 顶部，开始下一轮"思考"</span>
+
+        <span class="kw">else</span>:
+            <span class="cm"># ⑥ LLM 认为任务完成（stop_reason = "end_turn"），输出最终答案，退出循环</span>
+            answer = response.content[<span class="nu">0</span>].text
+            <span class="kw">print</span>(<span class="st">f"🤖 Agent: {answer}"</span>)
+            <span class="kw">return</span> answer
+
+<span class="fn">run_agent</span>(<span class="st">"上海今天天气怎么样？"</span>)</pre>
+    </div>
+
+    <!-- 循环流程图 -->
+    <div style="border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);padding:16px 20px;margin:4px 0 16px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-3);margin-bottom:12px">每一轮循环发生的事</div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;">
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);padding:5px 10px;">① 初始化消息</span>
+        <span style="color:var(--text-3)">→</span>
+        <span style="background:rgba(147,51,234,0.12);border:1px solid rgba(147,51,234,0.3);padding:5px 10px;">② LLM 思考</span>
+        <span style="color:var(--text-3)">→</span>
+        <span style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);padding:5px 10px;">③ 需要工具？</span>
+        <span style="color:var(--lime);font-weight:700;">YES</span>
+        <span style="color:var(--text-3)">→</span>
+        <span style="background:rgba(184,255,0,0.08);border:1px solid rgba(184,255,0,0.25);padding:5px 10px;">④ 执行工具</span>
+        <span style="color:var(--text-3)">→</span>
+        <span style="background:rgba(184,255,0,0.08);border:1px solid rgba(184,255,0,0.25);padding:5px 10px;">⑤ 结果存入历史</span>
+        <span style="color:var(--text-3)">→ 回②</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;">
+        <span style="color:var(--text-3);padding-left:2px">③ 不需要工具</span>
+        <span style="color:var(--text-3)">→</span>
+        <span style="background:rgba(0,255,176,0.08);border:1px solid rgba(0,255,176,0.25);padding:5px 10px;">⑥ 输出答案，退出</span>
+      </div>
+    </div>
+
+    <h3>运行输出</h3>
+    <div class="out-wrap">
+      <div class="out-head">OUTPUT</div>
+      <pre>👤 用户: 上海今天天气怎么样？
+
+  🔧 get_weather({'city': '上海'})
+  ↳  {'温度': '28°C', '天气': '晴天', '湿度': '65%'}
+
+<span style="color:var(--lime)">🤖 Agent: 上海今天天气晴朗，气温 28°C，湿度适中。
+是个好天气，出行不需要带伞！</span></pre>
+    </div>
+
+    <div class="callout callout-success"><strong>核心理解：</strong>循环退出条件是 <code>stop_reason == "end_turn"</code>（任务完成）。若需多个工具，Claude 会多次循环，每次获取更多信息，直到能给出完整答案。</div>
+
+    <div class="prompt-tips">
+      <div class="pt-header"><span class="pt-icon">🤖</span><span class="pt-title">用 AI 实现时，这样描述更精准</span><span class="pt-sub">复制给 Cursor / Claude Code</span></div>
+      <div class="pt-item">
+        <div class="pt-label">主循环</div>
+        <div class="pt-text">帮我实现一个 ReAct Agent 主循环：while True 不断调用 LLM，如果 stop_reason == "tool_use" 就执行工具并把结果追加进 messages 继续循环；如果 stop_reason == "end_turn" 就输出最终答案并 return 退出。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+      <div class="pt-item">
+        <div class="pt-label">调试观察</div>
+        <div class="pt-text">帮我在 Agent 循环的每一轮加上调试日志：打印当前轮次、LLM 的 stop_reason、调用了哪个工具（如果有）、工具返回结果。方便我观察 LLM 每步在做什么决策。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+      <div class="pt-item">
+        <div class="pt-label">防死循环</div>
+        <div class="pt-text">帮我给 Agent 循环加一个安全上限：最多执行 10 轮，超过后强制退出并返回"任务未完成，已达最大循环次数"。避免 LLM 陷入工具调用死循环。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(4)">← 上一章</button>
+    <button class="btn btn-primary" onclick="goTo(6)">下一章 →</button>
+  </div>
+</div>
+
+<!-- ══════════ CH 6: 记忆系统 ══════════ -->
+<div class="ch-page" id="ch-6">
+  <div class="ch-hero">
+    <div class="ch-tag">CHAPTER 06 · MEMORY SYSTEM</div>
+    <h2>🗄️ Agent 的记忆系统</h2>
+    <p>有用的 Agent 需要"记住"事情。了解四种记忆类型及其实现方式。</p>
+  </div>
+  <div class="ch-body">
+    <h3>四种记忆类型</h3>
+    <div class="card-grid">
+      <div class="card"><div class="ci">💬</div><div class="ct" style="color:var(--cyan)">工作记忆</div><div class="cd">当前对话上下文窗口，对话结束即消失</div></div>
+      <div class="card"><div class="ci">📋</div><div class="ct" style="color:#ffffff">临时记忆</div><div class="cd">任务执行中的中间结果，存在变量里</div></div>
+      <div class="card"><div class="ci">🗄️</div><div class="ct" style="color:var(--lime)">长期记忆</div><div class="cd">存入数据库，可跨会话永久保存</div></div>
+      <div class="card"><div class="ci">📚</div><div class="ct" style="color:#FCD34D">外部知识</div><div class="cd">RAG 检索增强，从文档库中搜索相关信息</div></div>
+    </div>
+
+    <h3>短期 vs 长期对比</h3>
+    <div class="mem-grid">
+      <div class="mem-card" style="border-color:rgba(0,217,255,.25)">
+        <h5 style="color:var(--cyan)">🧠 短期（上下文窗口）</h5>
+        <ul>
+          <li>存在 messages 列表里</li>
+          <li>对话结束即消失</li>
+          <li>有 Token 长度限制</li>
+          <li>成本随历史增长而上升</li>
+        </ul>
+      </div>
+      <div class="mem-card" style="border-color:rgba(0,255,176,.22)">
+        <h5 style="color:var(--lime)">💾 长期（外部存储）</h5>
+        <ul>
+          <li>存在文件/数据库/向量库</li>
+          <li>跨会话永久保存</li>
+          <li>通过工具读写</li>
+          <li>可以存储海量信息</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>实现简单的长期记忆 <span style="font-size:11px;font-weight:600;letter-spacing:1px;color:#000;background:var(--lime);padding:3px 8px;vertical-align:middle;margin-left:8px;">策略 ③ · 选择性记忆</span></h3>
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">memory.py</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre><span class="kw">import</span> json, os
+
+<span class="cm"># ① 记忆文件路径：Agent 停止后数据依然保留在这个 JSON 文件里</span>
+MEMORY_FILE = <span class="st">"agent_memory.json"</span>
+
+<span class="cm"># ② 读取记忆：从文件加载已有的 key-value 数据</span>
+<span class="cm">#    如果文件不存在（第一次运行），返回空字典 {}</span>
+<span class="kw">def</span> <span class="fn">load_memory</span>() -> dict:
+    <span class="kw">if</span> os.path.exists(MEMORY_FILE):
+        <span class="kw">with</span> <span class="fn">open</span>(MEMORY_FILE, <span class="st">"r"</span>, encoding=<span class="st">"utf-8"</span>) <span class="kw">as</span> f:
+            <span class="kw">return</span> json.load(f)
+    <span class="kw">return</span> {}
+
+<span class="cm"># ③ 保存记忆：把整个 memory 字典写回文件</span>
+<span class="cm">#    ensure_ascii=False 让中文正常存储，indent=2 让文件易读</span>
+<span class="kw">def</span> <span class="fn">save_memory</span>(memory: dict):
+    <span class="kw">with</span> <span class="fn">open</span>(MEMORY_FILE, <span class="st">"w"</span>, encoding=<span class="st">"utf-8"</span>) <span class="kw">as</span> f:
+        json.dump(memory, f, ensure_ascii=<span class="kw">False</span>, indent=<span class="nu">2</span>)
+
+<span class="cm"># ④ 存入一条记忆：先读出旧数据，加入新 key，再整体写回</span>
+<span class="cm">#    LLM 调用这个工具时传入 key（名称）和 value（内容）</span>
+<span class="kw">def</span> <span class="fn">remember</span>(key: str, value: str):
+    memory = <span class="fn">load_memory</span>()   <span class="cm"># 读出已有记忆，不覆盖其他条目</span>
+    memory[key] = value        <span class="cm"># 写入新条目，key 相同则更新</span>
+    <span class="fn">save_memory</span>(memory)
+    <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"success"</span>, <span class="st">"saved"</span>: <span class="st">f"{key} = {value}"</span>}
+
+<span class="cm"># ⑤ 查询一条记忆：用 key 查找，找不到时返回提示而不是报错</span>
+<span class="kw">def</span> <span class="fn">recall</span>(key: str):
+    <span class="kw">return</span> <span class="fn">load_memory</span>().get(key, <span class="st">f"未找到: '{key}'"</span>)</pre>
+    </div>
+
+    <div class="callout callout-tip">生产环境中，长期记忆通常存在 <strong>SQLite</strong> 或<strong>向量数据库</strong>（如 Chroma、Pinecone）中，支持语义搜索——找到"含义相近"的记忆。</div>
+
+    <h3>上下文管理技巧</h3>
+    <p>对话历史越积越长，Token 成本随之上升，甚至超出上下文窗口。以下三种策略是实际项目中最常用的应对方式：</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.06);margin-bottom:16px;">
+      <!-- 截断 -->
+      <div style="background:var(--bg);padding:20px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--lime);margin-bottom:8px">策略 ① · 截断</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">只保留最近 N 条消息</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.8;margin-bottom:12px">最简单粗暴的方案：超出数量就直接丢掉最早的消息，只把最近 N 轮发给 LLM。</div>
+        <div style="font-size:11px;color:#4ade80;margin-bottom:4px">✅ 实现简单，成本可控</div>
+        <div style="font-size:11px;color:#f87171;">❌ 可能丢失重要的早期信息</div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);padding:10px 12px;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--text-2)">messages = messages[-N*2:]<br><span style="color:var(--text-3)"># 保留最近 N 轮（每轮 2 条）</span></div>
+      </div>
+
+      <!-- 摘要压缩 -->
+      <div style="background:var(--bg);padding:20px 18px;border-left:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--lime);margin-bottom:8px">策略 ② · 摘要压缩</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">用 LLM 总结旧对话</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.8;margin-bottom:12px">当消息过多时，先让 LLM 把早期对话压缩成一段摘要，再把摘要 + 最近 N 条发给 LLM。</div>
+        <div style="font-size:11px;color:#4ade80;margin-bottom:4px">✅ 保留了关键信息</div>
+        <div style="font-size:11px;color:#f87171;">❌ 多一次 LLM 调用，有延迟和费用</div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);padding:10px 12px;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--text-2)">summary = llm("总结以下对话...")<br>messages = [{"role":"user","content":summary}] + recent</div>
+      </div>
+
+      <!-- 选择性记忆 -->
+      <div style="background:var(--bg);padding:20px 18px;border-left:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--lime);margin-bottom:8px">策略 ③ · 选择性记忆</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">主动提取并存储要点</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.8;margin-bottom:12px">Agent 每轮结束后主动判断"这条信息值得记住吗"，值得的写入长期记忆，不需要的丢弃。</div>
+        <div style="font-size:11px;color:#4ade80;margin-bottom:4px">✅ 上下文始终精简高效</div>
+        <div style="font-size:11px;color:#f87171;">❌ 需要设计"什么值得记"的判断逻辑</div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);padding:10px 12px;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--text-2)"><span style="color:var(--text-3)"># 对应上面 remember(key: str, value: str)</span><br>remember("user_name", "小明")<br>remember("user_city", "上海")<br><span style="color:var(--text-3)"># 不重要的信息直接丢弃，不写入文件</span></div>
+      </div>
+    </div>
+    <div class="callout callout-tip">实际项目通常<strong>组合使用</strong>：日常对话用截断，关键信息用选择性记忆存入数据库，超长任务用摘要压缩——根据场景灵活搭配。</div>
+
+    <div class="prompt-tips">
+      <div class="pt-header"><span class="pt-icon">🤖</span><span class="pt-title">用 AI 实现时，这样描述更精准</span><span class="pt-sub">复制给 Cursor / Claude Code</span></div>
+      <div class="pt-item">
+        <div class="pt-label">长期记忆</div>
+        <div class="pt-text">帮我用 JSON 文件实现 Agent 的长期记忆：load_memory() 读取文件返回字典（文件不存在时返回{}），save_memory(dict) 写回文件，remember(key, value) 读取后更新再保存，recall(key) 查询指定 key。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+      <div class="pt-item">
+        <div class="pt-label">历史截断</div>
+        <div class="pt-text">帮我给 Agent 的 messages 列表加上截断策略：当列表长度超过 N 条时，保留第 0 条（system 消息）和最后 10 条对话记录，其余丢弃，防止超过上下文窗口。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+      <div class="pt-item">
+        <div class="pt-label">选择性记忆</div>
+        <div class="pt-text">帮我实现选择性记忆：每轮对话结束后，调用 LLM 判断本轮是否出现值得记住的关键信息（如用户姓名、偏好、重要决定），有则调用 remember(key, value) 存入 JSON 文件，下次对话启动时通过 recall() 注入 system prompt。</div>
+        <button class="pt-copy" onclick="cp(this)">复制</button>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(5)">← 上一章</button>
+    <button class="btn btn-primary" onclick="goTo(7)">下一章 →</button>
+  </div>
+</div>
+
+<!-- ══════════ CH 7: 构建第一个 Agent ══════════ -->
+<div class="ch-page" id="ch-7">
+  <div class="ch-hero">
+    <div class="ch-tag">CHAPTER 07 · BUILD YOUR AGENT</div>
+    <h2>⚡ 构建你的第一个完整 Agent</h2>
+    <p>把所有知识整合起来，写一个真正能运行的 Agent——带工具调用、多轮对话、交互界面。</p>
+  </div>
+  <div class="ch-body">
+    <div class="callout callout-success"><strong>目标：</strong>一个智能助手 Agent，能查天气、做数学计算、查询当前时间，支持多轮持续对话。</div>
+
+    <h3>选择你的运行方式</h3>
+    <div class="card-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card">
+        <div class="ci">⚡</div>
+        <div class="ct">Claude Code</div>
+        <div class="cd">直接把代码粘贴进对话，让 Claude Code 帮你运行，无需任何安装</div>
+      </div>
+      <div class="card">
+        <div class="ci">🌐</div>
+        <div class="ct">Replit / Colab</div>
+        <div class="cd">浏览器里直接写和跑 Python，环境内置，粘贴代码即可运行</div>
+      </div>
+      <div class="card">
+        <div class="ci">💻</div>
+        <div class="ct">本地运行</div>
+        <div class="cd">需提前安装 Python 3.10+ 并运行 <code>pip install anthropic</code>，API Key 通过环境变量传入</div>
+      </div>
+    </div>
+    <div class="callout callout-warn">无论哪种方式，都需要对应模型提供商的 <strong>API Key</strong>。在各自的控制台创建后，<strong>不要把 Key 写进代码</strong>——应通过环境变量传入，泄露后立即撤销！
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;font-size:12px;">
+    <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border:1px solid rgba(255,255,255,0.08)"><div style="color:var(--lime);font-weight:700;margin-bottom:3px">Anthropic (Claude)</div><code style="color:var(--text-3)">console.anthropic.com</code></div>
+    <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border:1px solid rgba(255,255,255,0.08)"><div style="color:var(--lime);font-weight:700;margin-bottom:3px">OpenAI (GPT)</div><code style="color:var(--text-3)">platform.openai.com</code></div>
+    <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border:1px solid rgba(255,255,255,0.08)"><div style="color:var(--lime);font-weight:700;margin-bottom:3px">DeepSeek</div><code style="color:var(--text-3)">platform.deepseek.com</code></div>
+  </div>
+</div>
+
+    <h3>完整代码（可直接运行）</h3>
+    <p>创建文件 <code>my_first_agent.py</code>，把以下全部代码复制进去：</p>
+
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">my_first_agent.py</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre><span class="cm">"""
+my_first_agent.py — 你的第一个 AI Agent
+依赖: pip install anthropic
+配置: export ANTHROPIC_API_KEY="你的key"
+"""</span>
+<span class="kw">import</span> json
+<span class="kw">import</span> anthropic
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+
+<span class="cm"># ── 工具定义 ─────────────────────────────────</span>
+TOOLS = [
+    {
+        <span class="st">"name"</span>: <span class="st">"get_weather"</span>,
+        <span class="st">"description"</span>: <span class="st">"获取指定城市的天气"</span>,
+        <span class="st">"input_schema"</span>: {
+            <span class="st">"type"</span>: <span class="st">"object"</span>,
+            <span class="st">"properties"</span>: {<span class="st">"city"</span>: {<span class="st">"type"</span>: <span class="st">"string"</span>, <span class="st">"description"</span>: <span class="st">"城市名"</span>}},
+            <span class="st">"required"</span>: [<span class="st">"city"</span>]
+        }
+    },
+    {
+        <span class="st">"name"</span>: <span class="st">"calculate"</span>,
+        <span class="st">"description"</span>: <span class="st">"做数学计算，支持 + - * /"</span>,
+        <span class="st">"input_schema"</span>: {
+            <span class="st">"type"</span>: <span class="st">"object"</span>,
+            <span class="st">"properties"</span>: {<span class="st">"expression"</span>: {<span class="st">"type"</span>: <span class="st">"string"</span>, <span class="st">"description"</span>: <span class="st">"数学表达式，如 '2+3*4'"</span>}},
+            <span class="st">"required"</span>: [<span class="st">"expression"</span>]
+        }
+    },
+    {
+        <span class="st">"name"</span>: <span class="st">"get_current_time"</span>,
+        <span class="st">"description"</span>: <span class="st">"获取当前日期和时间"</span>,
+        <span class="st">"input_schema"</span>: {<span class="st">"type"</span>: <span class="st">"object"</span>, <span class="st">"properties"</span>: {}}
+    }
+]
+
+<span class="cm"># ── 工具实现 ─────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">get_weather</span>(city: str) -> dict:
+    data = {
+        <span class="st">"上海"</span>: {<span class="st">"天气"</span>: <span class="st">"晴天"</span>, <span class="st">"温度"</span>: <span class="st">"28°C"</span>},
+        <span class="st">"北京"</span>: {<span class="st">"天气"</span>: <span class="st">"多云"</span>, <span class="st">"温度"</span>: <span class="st">"22°C"</span>},
+        <span class="st">"深圳"</span>: {<span class="st">"天气"</span>: <span class="st">"阵雨"</span>, <span class="st">"温度"</span>: <span class="st">"30°C"</span>},
+    }
+    <span class="kw">return</span> data.get(city, {<span class="st">"error"</span>: <span class="st">f"找不到 {city} 的数据"</span>})
+
+<span class="kw">def</span> <span class="fn">calculate</span>(expression: str) -> dict:
+    <span class="kw">try</span>:
+        allowed = <span class="kw">set</span>(<span class="st">"0123456789+-*/()., "</span>)
+        <span class="kw">if not all</span>(c <span class="kw">in</span> allowed <span class="kw">for</span> c <span class="kw">in</span> expression):
+            <span class="kw">return</span> {<span class="st">"error"</span>: <span class="st">"不安全的表达式"</span>}
+        <span class="kw">return</span> {<span class="st">"result"</span>: <span class="fn">eval</span>(expression), <span class="st">"expression"</span>: expression}
+    <span class="kw">except</span> <span class="cl">Exception</span> <span class="kw">as</span> e:
+        <span class="kw">return</span> {<span class="st">"error"</span>: <span class="fn">str</span>(e)}
+
+<span class="kw">def</span> <span class="fn">get_current_time</span>() -> dict:
+    now = datetime.now()
+    <span class="kw">return</span> {
+        <span class="st">"datetime"</span>: now.strftime(<span class="st">"%Y年%m月%d日 %H:%M:%S"</span>),
+        <span class="st">"weekday"</span>: [<span class="st">"周一"</span>,<span class="st">"周二"</span>,<span class="st">"周三"</span>,<span class="st">"周四"</span>,<span class="st">"周五"</span>,<span class="st">"周六"</span>,<span class="st">"周日"</span>][now.weekday()]
+    }
+
+<span class="kw">def</span> <span class="fn">execute_tool</span>(name: str, inputs: dict):
+    <span class="kw">if</span> name == <span class="st">"get_weather"</span>:      <span class="kw">return</span> <span class="fn">get_weather</span>(**inputs)
+    <span class="kw">if</span> name == <span class="st">"calculate"</span>:        <span class="kw">return</span> <span class="fn">calculate</span>(**inputs)
+    <span class="kw">if</span> name == <span class="st">"get_current_time"</span>: <span class="kw">return</span> <span class="fn">get_current_time</span>()
+    <span class="kw">return</span> {<span class="st">"error"</span>: <span class="st">f"未知工具: {name}"</span>}
+
+<span class="cm"># ── Agent 主循环 ──────────────────────────────</span>
+client = anthropic.<span class="cl">Anthropic</span>()
+
+<span class="kw">def</span> <span class="fn">run_agent</span>(user_input: str, history: list) -> str:
+    history.append({<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: user_input})
+
+    <span class="kw">while True</span>:
+        response = client.messages.create(
+            model=<span class="st">"claude-opus-4-5"</span>,
+            max_tokens=<span class="nu">4096</span>,
+            system=<span class="st">"你是智能助手，可查天气、做计算、查时间。用中文回答，简洁友好。"</span>,
+            tools=TOOLS,
+            messages=history
+        )
+        <span class="kw">if</span> response.stop_reason == <span class="st">"tool_use"</span>:
+            results = []
+            <span class="kw">for</span> block <span class="kw">in</span> response.content:
+                <span class="kw">if</span> block.type == <span class="st">"tool_use"</span>:
+                    <span class="kw">print</span>(<span class="st">f"   ⚙️  {block.name}({block.input})"</span>)
+                    result = <span class="fn">execute_tool</span>(block.name, block.input)
+                    results.append({
+                        <span class="st">"type"</span>: <span class="st">"tool_result"</span>,
+                        <span class="st">"tool_use_id"</span>: block.id,
+                        <span class="st">"content"</span>: json.dumps(result, ensure_ascii=<span class="kw">False</span>)
+                    })
+            history.append({<span class="st">"role"</span>: <span class="st">"assistant"</span>, <span class="st">"content"</span>: response.content})
+            history.append({<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: results})
+        <span class="kw">else</span>:
+            answer = response.content[<span class="nu">0</span>].text
+            history.append({<span class="st">"role"</span>: <span class="st">"assistant"</span>, <span class="st">"content"</span>: answer})
+            <span class="kw">return</span> answer
+
+<span class="cm"># ── 交互界面 ─────────────────────────────────</span>
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    <span class="kw">print</span>(<span class="st">"🤖 智能助手已启动！输入 'quit' 退出\n"</span>)
+    history = []
+    <span class="kw">while True</span>:
+        user = <span class="fn">input</span>(<span class="st">"你: "</span>).strip()
+        <span class="kw">if</span> user.lower() <span class="kw">in</span> (<span class="st">"quit"</span>, <span class="st">"exit"</span>, <span class="st">"退出"</span>): <span class="kw">break</span>
+        <span class="kw">if not</span> user: <span class="kw">continue</span>
+        answer = <span class="fn">run_agent</span>(user, history)
+        <span class="kw">print</span>(<span class="st">f"Agent: {answer}\n"</span>)</pre>
+    </div>
+
+    <h3>运行步骤</h3>
+    <div class="step-list">
+
+      <div class="step-item">
+        <div class="step-n">1</div>
+        <div style="width:100%">
+          <div class="step-title">把代码复制到文件</div>
+          <div class="step-desc" style="margin-bottom:8px">点击上方代码块右上角的「复制」按钮，新建一个文本文件，粘贴进去，保存为 <code>my_first_agent.py</code>（注意后缀是 <code>.py</code>，不是 <code>.txt</code>）。</div>
+          <div style="font-size:11px;color:var(--text-3)">💡 用什么编辑器？VS Code、Cursor、记事本都可以。推荐用 VS Code，安装 Python 插件后有语法高亮。</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-n">2</div>
+        <div style="width:100%">
+          <div class="step-title">获取并配置 API Key</div>
+          <div class="step-desc" style="margin-bottom:8px">去模型提供商的控制台注册账号并创建 API Key（参考上方表格）。然后在终端里运行下面这行命令，把 Key 设为环境变量：</div>
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:10px 14px;font-family:var(--mono);font-size:12px;margin-bottom:8px;">
+            <span style="color:var(--text-3)"># Mac / Linux</span><br>
+            export ANTHROPIC_API_KEY="sk-ant-xxxxxx"<br><br>
+            <span style="color:var(--text-3)"># Windows（命令提示符）</span><br>
+            set ANTHROPIC_API_KEY=sk-ant-xxxxxx
+          </div>
+          <div style="font-size:11px;color:var(--text-3)">💡 <strong style="color:var(--text-2)">什么是环境变量？</strong> 相当于在系统里临时保存一个值，程序运行时可以读取，这样 Key 就不用写进代码文件里。关掉终端后失效，下次需要重新设置。</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-n">3</div>
+        <div style="width:100%">
+          <div class="step-title">在终端运行代码</div>
+          <div class="step-desc" style="margin-bottom:8px">打开终端（Mac 搜索「Terminal」，Windows 搜索「命令提示符」），用 <code>cd</code> 命令进入代码文件所在的文件夹，然后运行：</div>
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:10px 14px;font-family:var(--mono);font-size:12px;margin-bottom:8px;">
+            <span style="color:var(--text-3)"># 进入文件夹（把路径替换成你的）</span><br>
+            cd ~/Desktop/my-agent<br><br>
+            <span style="color:var(--text-3)"># 运行</span><br>
+            python my_first_agent.py
+          </div>
+          <div style="font-size:11px;color:var(--text-3)">💡 如果提示「找不到 python」，试试 <code>python3 my_first_agent.py</code>。如果提示缺少 anthropic 模块，先运行 <code>pip install anthropic</code>。</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-n">4</div>
+        <div style="width:100%">
+          <div class="step-title">和 Agent 对话</div>
+          <div class="step-desc" style="margin-bottom:8px">程序启动后会显示「智能助手已启动！」，直接输入问题按回车即可。试试这些：</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+            <div style="background:rgba(184,255,0,0.05);border:1px solid rgba(184,255,0,0.15);padding:8px 12px;"><span style="color:var(--lime)">→</span> 上海今天天气怎么样？<div style="color:var(--text-3);margin-top:3px;font-size:11px">测试天气工具</div></div>
+            <div style="background:rgba(184,255,0,0.05);border:1px solid rgba(184,255,0,0.15);padding:8px 12px;"><span style="color:var(--lime)">→</span> 123 × 456 等于多少？<div style="color:var(--text-3);margin-top:3px;font-size:11px">测试计算工具</div></div>
+            <div style="background:rgba(184,255,0,0.05);border:1px solid rgba(184,255,0,0.15);padding:8px 12px;"><span style="color:var(--lime)">→</span> 现在几点了？<div style="color:var(--text-3);margin-top:3px;font-size:11px">测试时间工具</div></div>
+            <div style="background:rgba(184,255,0,0.05);border:1px solid rgba(184,255,0,0.15);padding:8px 12px;"><span style="color:var(--lime)">→</span> 输入 quit 退出程序<div style="color:var(--text-3);margin-top:3px;font-size:11px">退出对话</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="callout callout-success">🎉 恭喜！你刚刚构建了一个真正的 AI Agent。它能主动决策、调用工具、多轮对话。与 ChatGPT 的核心区别：<strong>你完全掌控了它的行为和工具</strong>。</div>
+
+    <div class="prompt-tips">
+      <div class="pt-header">
+        <span style="font-size:16px">🤖</span>
+        <span class="pt-title">用 AI 实现时，这样描述更精准</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-3)">复制给 Cursor / Claude Code</span>
+      </div>
+      <div class="pt-item">
+        <span class="pt-label">整合搭建</span>
+        <span class="pt-text">帮我把 LLM 调用、工具定义、Agent 循环整合成一个完整的 run_agent() 函数，接收 user_input 字符串，返回最终答案字符串，包含 while True 循环和 stop_reason 判断。</span>
+        <button class="pt-copy btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">复制</button>
+      </div>
+      <div class="pt-item">
+        <span class="pt-label">错误处理</span>
+        <span class="pt-text">在 run_agent() 函数中加入异常捕获：工具执行失败时返回 error 信息给 LLM 而不是崩溃；LLM API 调用失败时重试最多 3 次，间隔 1 秒。</span>
+        <button class="pt-copy btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">复制</button>
+      </div>
+      <div class="pt-item">
+        <span class="pt-label">交互测试</span>
+        <span class="pt-text">给这个 Agent 加一个命令行交互入口：while True 循环读取用户输入，调用 run_agent()，打印结果，输入 exit 退出。</span>
+        <button class="pt-copy btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">复制</button>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(6)">← 上一章</button>
+    <button class="btn btn-primary" onclick="goTo(8)">下一章 →</button>
+  </div>
+</div>
+
+<!-- ══════════ CH 8: 进阶 ══════════ -->
+<div class="ch-page" id="ch-8">
+  <div class="ch-hero">
+    <div class="ch-tag">CHAPTER 08 · ADVANCED</div>
+    <h2>🚀 多 Agent 系统与后续路线</h2>
+    <p>掌握了核心后，了解生产级 Agent 如何架构，以及你的下一步。</p>
+  </div>
+  <div class="ch-body">
+    <h3>多 Agent 系统</h3>
+    <p>单 Agent 有局限——复杂任务可以让多个 Agent 协作，每个专注于自己领域：</p>
+    <div class="card-grid">
+      <div class="card"><div class="ci">🎯</div><div class="ct">编排者 Agent</div><div class="cd">接收任务、分解步骤、分派给子 Agent</div></div>
+      <div class="card"><div class="ci">🔍</div><div class="ct">搜索 Agent</div><div class="cd">专门负责网络搜索和信息收集</div></div>
+      <div class="card"><div class="ci">✍️</div><div class="ct">写作 Agent</div><div class="cd">专门负责内容生成和优化</div></div>
+      <div class="card"><div class="ci">✅</div><div class="ct">审核 Agent</div><div class="cd">检查其他 Agent 的输出质量</div></div>
+    </div>
+
+    <h3>你的学习路线</h3>
+    <div class="step-list">
+      <div class="roadmap-item">
+        <div class="rm-icon done">✓</div>
+        <div><div class="rm-title" style="color:var(--lime)">已完成：核心概念</div><div class="rm-desc">Agent 架构、LLM、工具调用、Agent 循环、记忆系统</div></div>
+      </div>
+      <div class="roadmap-item">
+        <div class="rm-icon next">→</div>
+        <div><div class="rm-title">下一步：接入真实工具</div><div class="rm-desc">OpenWeather API（真实天气）、SQLite（真实数据库）、Tavily（搜索引擎）</div></div>
+      </div>
+      <div class="roadmap-item">
+        <div class="rm-icon future">→</div>
+        <div><div class="rm-title">进阶：多 Agent 框架</div><div class="rm-desc">LangGraph、AutoGen，构建多 Agent 协作系统</div></div>
+      </div>
+      <div class="roadmap-item">
+        <div class="rm-icon future">→</div>
+        <div><div class="rm-title">高阶：RAG 与向量数据库</div><div class="rm-desc">让 Agent 检索海量文档，实现企业级知识库问答</div></div>
+      </div>
+    </div>
+
+    <h3>⚡ Loop Engineering：让 Agent 自主迭代</h3>
+    <p style="color:var(--text-2)">学完本课程，你已经具备了设计 Loop Engineering 的全部底层知识。Loop Engineering 的核心是：<strong style="color:var(--text)">你不写代码，你设计循环指令，让 Agent 自己写、自己测、自己改</strong>，直到任务完成。</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0;">
+      <div style="border:1px solid rgba(184,255,0,.25);padding:16px;background:rgba(184,255,0,.02)">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--lime);margin-bottom:10px">模式 ① 单循环</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.8">
+          一个 Agent 独立完成任务，自我修正直到通过验证。<br><br>
+          <span style="color:var(--text-3)">适合：代码生成、文章写作、数据处理</span>
+        </div>
+      </div>
+      <div style="border:1px solid rgba(184,255,0,.25);padding:16px;background:rgba(184,255,0,.02)">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--lime);margin-bottom:10px">模式 ② 嵌套循环</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.8">
+          外层 Agent 拆解任务，内层 Agent 各自完成子任务并迭代。<br><br>
+          <span style="color:var(--text-3)">适合：复杂项目、多步骤工作流</span>
+        </div>
+      </div>
+      <div style="border:1px solid rgba(184,255,0,.25);padding:16px;background:rgba(184,255,0,.02)">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--lime);margin-bottom:10px">模式 ③ 带评审循环</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.8">
+          一个 Agent 生成，另一个 Agent 审核，不通过则打回重做。<br><br>
+          <span style="color:var(--text-3)">适合：高质量要求、需要交叉验证</span>
+        </div>
+      </div>
+    </div>
+
+    <p style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--text-3);margin:20px 0 8px">四个关键设计要素</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.06);margin-bottom:16px">
+      <div style="background:var(--bg);padding:16px 18px;">
+        <div style="font-size:11px;font-weight:700;color:var(--lime);margin-bottom:6px">① 明确任务定义</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.7">告诉 Agent 要做什么、完成标准是什么。越清晰，Agent 偏离越少。</div>
+      </div>
+      <div style="background:var(--bg);padding:16px 18px;border-left:1px solid rgba(255,255,255,0.06)">
+        <div style="font-size:11px;font-weight:700;color:var(--lime);margin-bottom:6px">② 可验证的终止条件</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.7">循环必须有明确出口——测试全部通过、达到质量分、人工确认。没有终止条件 = 死循环。</div>
+      </div>
+      <div style="background:var(--bg);padding:16px 18px;border-top:1px solid rgba(255,255,255,0.06)">
+        <div style="font-size:11px;font-weight:700;color:var(--lime);margin-bottom:6px">③ 最大迭代次数上限</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.7">兜底保护。建议 10-20 轮，超出后强制停止并报告卡点，而不是默默消耗 Token。</div>
+      </div>
+      <div style="background:var(--bg);padding:16px 18px;border-top:1px solid rgba(255,255,255,0.06);border-left:1px solid rgba(255,255,255,0.06)">
+        <div style="font-size:11px;font-weight:700;color:var(--lime);margin-bottom:6px">④ 工具权限最小化</div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.7">只给 Agent 完成任务必需的工具。权限越大，出错代价越高，Loop 越难控制。</div>
+      </div>
+    </div>
+
+    <p style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--text-3);margin:20px 0 8px">实用 Loop 指令模板</p>
+    <div style="border:1px solid rgba(255,255,255,0.08);">
+      <div style="padding:8px 14px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-3)">代码开发 Loop</div>
+      <div style="padding:14px 16px;font-family:var(--mono);font-size:12px;color:var(--text-2);line-height:2">
+        你是一个 Python 开发 Agent。任务：[具体任务描述]。<br>
+        工具：write_file（写代码）、run_tests（执行测试）、read_error（读取错误信息）。<br>
+        循环执行直到 run_tests() 返回全部通过，或达到 <span style="color:var(--lime)">15 轮上限</span>。<br>
+        每轮打印：轮次 / 测试结果 / 本轮修改点。超出上限报告卡点。
+      </div>
+    </div>
+    <div style="border:1px solid rgba(255,255,255,0.08);margin-top:8px">
+      <div style="padding:8px 14px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-3)">内容创作 Loop（带评审）</div>
+      <div style="padding:14px 16px;font-family:var(--mono);font-size:12px;color:var(--text-2);line-height:2">
+        Writer Agent：根据大纲生成文章初稿。<br>
+        Reviewer Agent：按以下标准评分（0-10）：逻辑性、可读性、覆盖度。<br>
+        低于 <span style="color:var(--lime)">8 分</span>则返回具体改进意见，Writer 修改后重新评审。<br>
+        通过后输出最终版本，最多迭代 <span style="color:var(--lime)">5 轮</span>。
+      </div>
+    </div>
+
+    <div class="callout callout-tip" style="margin-top:20px">
+      <strong>Loop Engineering 的本质就是你在课程里学的 Agent 循环——只是把执行者从代码变成了 AI 自己。</strong>你理解了 stop_reason、工具调用、上下文管理，就能设计出真正可控的 Loop，而不是祈祷 Agent 别跑偏。
+    </div>
+
+    <h3>推荐资源</h3>
+    <table class="rtable">
+      <tr><th>资源</th><th>内容</th><th>地址</th></tr>
+      <tr><td><strong>Anthropic 官方文档</strong></td><td>Claude API 完整文档</td><td><code>docs.anthropic.com</code></td></tr>
+      <tr><td><strong>LangChain</strong></td><td>流行 Agent 框架</td><td><code>langchain.com</code></td></tr>
+      <tr><td><strong>LangGraph</strong></td><td>多 Agent 图形框架</td><td><code>langchain.com/langgraph</code></td></tr>
+      <tr><td><strong>AutoGen</strong></td><td>微软多 Agent 框架</td><td><code>github.com/microsoft/autogen</code></td></tr>
+      <tr><td><strong>Chroma</strong></td><td>向量数据库</td><td><code>trychroma.com</code></td></tr>
+    </table>
+
+    <div class="callout callout-success">🎓 <strong>课程完成！</strong>你已掌握构建 AI Agent 的全部核心知识。从 LLM 调用到工具定义，从 Agent 循环到记忆系统——这些是所有 Agent 框架的底层基础。祝你构建出改变世界的 Agent！</div>
+
+    <div class="prompt-tips">
+      <div class="pt-header">
+        <span style="font-size:16px">🤖</span>
+        <span class="pt-title">用 AI 实现时，这样描述更精准</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-3)">复制给 Cursor / Claude Code</span>
+      </div>
+      <div class="pt-item">
+        <span class="pt-label">框架对比</span>
+        <span class="pt-text">用代码示例对比 LangChain Agent 和手写 ReAct 循环实现同一个天气查询 Agent 的写法，说明各自的优缺点和适用场景。</span>
+        <button class="pt-copy btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">复制</button>
+      </div>
+      <div class="pt-item">
+        <span class="pt-label">多Agent入门</span>
+        <span class="pt-text">帮我实现一个最简单的两层 Agent 结构：一个 orchestrator_agent() 接收任务并分解，调用 worker_agent() 执行子任务并返回结果，最后汇总输出。用 Python 函数实现，不依赖任何框架。</span>
+        <button class="pt-copy btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">复制</button>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(7)">← 上一章</button>
+    <button class="btn btn-primary" onclick="goTo(9)">下一章 →</button>
+  </div>
+</div>
+
+<!-- ══════════ CH 9: Agent 质量评估 ══════════ -->
+<div class="ch-page" id="ch-9">
+  <div class="ch-hero">
+    <div class="ch-tag">CHAPTER 09 · EVALUATION</div>
+    <h2>📊 Agent 质量评估</h2>
+    <p>会构建只是开始，能判断好坏才是高手。掌握评估 Agent 的核心维度与方法，让你的 Agent 从"能跑"走向"可靠"。</p>
+  </div>
+  <div class="ch-body">
+
+    <h3>为什么评估如此重要？</h3>
+    <p>和普通软件不同，Agent 的行为是<strong>概率性的</strong>——同一个问题，不同运行可能产生不同结果。没有评估体系，你无法知道：</p>
+    <ul>
+      <li>Agent 在新场景下是否还能正常工作</li>
+      <li>一次修改是改进了还是引入了退化</li>
+      <li>当前 Agent 的瓶颈在哪里（Prompt？工具？循环逻辑？）</li>
+    </ul>
+    <div class="callout callout-warn"><strong>常见误区：</strong>"我测了几条，Agent 回答得不错" ≠ Agent 质量好。个案测试无法覆盖真实分布，系统化评估才是基准。</div>
+
+    <h3>三大评估维度</h3>
+    <div class="card-grid">
+      <div class="card">
+        <div class="ci">🎯</div>
+        <div class="ct">任务完成质量</div>
+        <div class="cd">最终答案是否正确？目标是否真正达成？结果有没有幻觉？</div>
+      </div>
+      <div class="card">
+        <div class="ci">⚡</div>
+        <div class="ct">效率与成本</div>
+        <div class="cd">用了几轮循环？消耗多少 Token？平均延迟多少秒？</div>
+      </div>
+      <div class="card">
+        <div class="ci">🛡️</div>
+        <div class="ct">可靠性与安全</div>
+        <div class="cd">工具失败时是否优雅降级？边界输入下行为是否合理？</div>
+      </div>
+    </div>
+
+    <h3>工具设计质量检查清单</h3>
+    <p>工具定义的质量直接决定 LLM 能否正确选择和调用它。用下面的标准检查你的每个工具：</p>
+    <table class="ctable">
+      <tr><th>检查项</th><th>差的例子</th><th>好的例子</th></tr>
+      <tr>
+        <td><strong>description 清晰度</strong></td>
+        <td><code>"查天气"</code></td>
+        <td><code>"获取指定城市的实时天气，包含温度、天气状况和湿度"</code></td>
+      </tr>
+      <tr>
+        <td><strong>参数描述</strong></td>
+        <td><code>"city": "城市"</code></td>
+        <td><code>"city": "城市名，使用中文，如 '上海'、'北京'"</code></td>
+      </tr>
+      <tr>
+        <td><strong>工具粒度</strong></td>
+        <td>一个工具做所有事</td>
+        <td>每个工具职责单一，边界清晰</td>
+      </tr>
+      <tr>
+        <td><strong>错误返回</strong></td>
+        <td>抛出异常，Agent 崩溃</td>
+        <td>返回 <code>{"error": "..."}</code>，Agent 能继续处理</td>
+      </tr>
+    </table>
+
+    <h3>构建测试用例集（Golden Set）</h3>
+    <p>Golden Set 是一组"已知正确答案"的测试用例，用来持续回归验证 Agent。</p>
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">eval_agent.py</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre><span class="cm"># 测试用例集：输入 + 期望行为</span>
+GOLDEN_SET = [
+    {
+        <span class="st">"input"</span>: <span class="st">"上海今天天气怎么样？"</span>,
+        <span class="st">"expect_tool"</span>: <span class="st">"get_weather"</span>,       <span class="cm"># 必须调用此工具</span>
+        <span class="st">"expect_keywords"</span>: [<span class="st">"上海"</span>, <span class="st">"°C"</span>],     <span class="cm"># 答案必须包含的关键词</span>
+    },
+    {
+        <span class="st">"input"</span>: <span class="st">"123 乘以 456 等于多少？"</span>,
+        <span class="st">"expect_tool"</span>: <span class="st">"calculate"</span>,
+        <span class="st">"expect_keywords"</span>: [<span class="st">"56088"</span>],
+    },
+    {
+        <span class="st">"input"</span>: <span class="st">"你叫什么名字？"</span>,
+        <span class="st">"expect_tool"</span>: <span class="kw">None</span>,                <span class="cm"># 不应调用任何工具</span>
+        <span class="st">"expect_keywords"</span>: [],
+    },
+]
+
+<span class="kw">def</span> <span class="fn">run_eval</span>():
+    results = []
+    <span class="kw">for</span> case <span class="kw">in</span> GOLDEN_SET:
+        used_tools = []
+        answer = <span class="fn">run_agent_tracked</span>(case[<span class="st">"input"</span>], used_tools)  <span class="cm"># 带工具追踪</span>
+
+        tool_ok = (case[<span class="st">"expect_tool"</span>] <span class="kw">is None</span> <span class="kw">or</span>
+                   case[<span class="st">"expect_tool"</span>] <span class="kw">in</span> used_tools)
+        kw_ok   = <span class="fn">all</span>(kw <span class="kw">in</span> answer <span class="kw">for</span> kw <span class="kw">in</span> case[<span class="st">"expect_keywords"</span>])
+        passed  = tool_ok <span class="kw">and</span> kw_ok
+
+        results.append({<span class="st">"input"</span>: case[<span class="st">"input"</span>], <span class="st">"passed"</span>: passed})
+        <span class="kw">print</span>(<span class="st">f"{'✅' if passed else '❌'} {case['input'][:20]}..."</span>)
+
+    score = <span class="fn">sum</span>(<span class="nu">1</span> <span class="kw">for</span> r <span class="kw">in</span> results <span class="kw">if</span> r[<span class="st">"passed"</span>]) / <span class="fn">len</span>(results) * <span class="nu">100</span>
+    <span class="kw">print</span>(<span class="st">f"\n📊 通过率: {score:.0f}% ({len(results)} 个用例)"</span>)
+    <span class="kw">return</span> score</pre>
+    </div>
+
+    <h3>量化评估指标</h3>
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">metrics.py</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre><span class="kw">import</span> time
+
+<span class="kw">def</span> <span class="fn">run_agent_with_metrics</span>(user_input: str, history: list) -> dict:
+    start    = time.time()
+    turns    = <span class="nu">0</span>
+    tokens_in  = <span class="nu">0</span>
+    tokens_out = <span class="nu">0</span>
+    tools_called = []
+
+    <span class="kw">while True</span>:
+        response = client.messages.create(
+            model=<span class="st">"claude-opus-4-5"</span>,
+            max_tokens=<span class="nu">4096</span>,
+            system=<span class="st">"你是智能助手。"</span>,
+            tools=TOOLS,
+            messages=history
+        )
+        turns      += <span class="nu">1</span>
+        tokens_in  += response.usage.input_tokens
+        tokens_out += response.usage.output_tokens
+
+        <span class="kw">if</span> response.stop_reason == <span class="st">"tool_use"</span>:
+            <span class="kw">for</span> block <span class="kw">in</span> response.content:
+                <span class="kw">if</span> block.type == <span class="st">"tool_use"</span>:
+                    tools_called.append(block.name)
+                    <span class="cm"># ... 执行工具，更新 history ...</span>
+        <span class="kw">else</span>:
+            answer = response.content[<span class="nu">0</span>].text
+            <span class="kw">return</span> {
+                <span class="st">"answer"</span>:       answer,
+                <span class="st">"latency_s"</span>:    <span class="fn">round</span>(time.time() - start, <span class="nu">2</span>),
+                <span class="st">"turns"</span>:        turns,
+                <span class="st">"tokens_in"</span>:    tokens_in,
+                <span class="st">"tokens_out"</span>:   tokens_out,
+                <span class="st">"tools_called"</span>: tools_called,
+            }</pre>
+    </div>
+    <div class="out-wrap">
+      <div class="out-head">示例指标输出</div>
+      <pre>{
+  "answer":       "上海今天 28°C，晴天，出门不用带伞。",
+  "latency_s":    1.84,
+  "turns":        2,
+  "tokens_in":    312,
+  "tokens_out":   48,
+  "tools_called": ["get_weather"]
+}</pre>
+    </div>
+
+    <h3>用 LLM 当裁判（LLM-as-Judge）</h3>
+    <p>对于开放性问题（没有唯一标准答案），可以用另一个 LLM 来评分，比人工更快、比关键词匹配更准：</p>
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">llm_judge.py</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre><span class="kw">def</span> <span class="fn">llm_judge</span>(question: str, answer: str) -> dict:
+    prompt = <span class="st">f"""你是一个严格的 AI Agent 评估员。
+
+问题：{question}
+Agent 的回答：{answer}
+
+请从以下维度评分（1-5分），只返回 JSON：
+- accuracy: 信息是否准确（5=完全正确，1=存在错误）
+- relevance: 回答是否切题（5=直接回答，1=答非所问）
+- conciseness: 是否简洁（5=恰到好处，1=冗长或过短）
+
+示例输出：{{"accuracy": 5, "relevance": 4, "conciseness": 3, "reason": "..."}}"""</span>
+
+    resp = client.messages.create(
+        model=<span class="st">"claude-opus-4-5"</span>,
+        max_tokens=<span class="nu">256</span>,
+        messages=[{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: prompt}]
+    )
+    <span class="kw">import</span> json
+    <span class="kw">return</span> json.loads(resp.content[<span class="nu">0</span>].text)</pre>
+    </div>
+
+    <h3>评估结果的解读与行动</h3>
+    <table class="ctable">
+      <tr><th>发现的问题</th><th>根因</th><th>改进方向</th></tr>
+      <tr>
+        <td>工具调用错误（选错工具）</td>
+        <td>工具 description 不清晰</td>
+        <td>重写 description，增加使用场景说明</td>
+      </tr>
+      <tr>
+        <td>循环次数过多（3+ 轮才完成）</td>
+        <td>工具返回信息不足，或 System Prompt 模糊</td>
+        <td>丰富工具返回字段；明确 System Prompt 目标</td>
+      </tr>
+      <tr>
+        <td>边界输入下崩溃</td>
+        <td>工具缺乏错误处理</td>
+        <td>所有工具函数增加 try/except，返回结构化 error</td>
+      </tr>
+      <tr>
+        <td>答案包含幻觉</td>
+        <td>LLM 没有依赖工具，直接凭知识回答</td>
+        <td>System Prompt 中强调"必须调用工具获取实时数据"</td>
+      </tr>
+      <tr>
+        <td>Token 消耗过高</td>
+        <td>对话历史过长，或工具返回大量无关数据</td>
+        <td>裁剪工具返回字段；实现上下文摘要压缩</td>
+      </tr>
+    </table>
+
+    <div class="callout callout-tip"><strong>最小可行评估流程：</strong>① 写 10 条 Golden Set 用例 → ② 跑通 <code>run_eval()</code> → ③ 记录通过率基准 → ④ 每次改动后对比基准。这比"感觉好像没问题"强 100 倍。</div>
+
+    <div class="quiz-box">
+      <div class="quiz-q">❓ 小测验：Agent 调用了错误的工具（该查天气却做了计算），最可能的根因是什么？</div>
+      <button class="quiz-o" onclick="quiz(this,false)">A. 模型能力不足，换更强的模型</button>
+      <button class="quiz-o" onclick="quiz(this,true)">B. 工具的 description 不够清晰，LLM 无法区分</button>
+      <button class="quiz-o" onclick="quiz(this,false)">C. Agent 循环逻辑有 Bug</button>
+      <button class="quiz-o" onclick="quiz(this,false)">D. Token 数量不够</button>
+      <div class="quiz-res"></div>
+    </div>
+
+    <div class="callout callout-success">🎓 <strong>课程完成！</strong>你已掌握构建 AI Agent 的全部核心知识，包括如何系统评估和持续改进它。从 LLM 调用到工具定义，从 Agent 循环到质量评估——这些是所有生产级 Agent 的底层基础。祝你构建出改变世界的 Agent！</div>
+
+    <div class="prompt-tips">
+      <div class="pt-header">
+        <span style="font-size:16px">🤖</span>
+        <span class="pt-title">用 AI 实现时，这样描述更精准</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-3)">复制给 Cursor / Claude Code</span>
+      </div>
+      <div class="pt-item">
+        <span class="pt-label">黄金用例集</span>
+        <span class="pt-text">帮我为一个天气查询 Agent 创建 10 条 Golden Set 评估用例，格式为 Python 列表，每条包含 input（用户问题）、expected_tool（期望调用的工具名）、expected_keywords（最终回答中应出现的关键词列表）。</span>
+        <button class="pt-copy btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">复制</button>
+      </div>
+      <div class="pt-item">
+        <span class="pt-label">自动评估脚本</span>
+        <span class="pt-text">帮我写一个 run_eval() 函数，遍历 golden_set 列表，对每条用例调用 run_agent()，检查返回结果是否包含 expected_keywords，统计通过率并打印详细报告。</span>
+        <button class="pt-copy btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">复制</button>
+      </div>
+      <div class="pt-item">
+        <span class="pt-label">失败分析</span>
+        <span class="pt-text">我的 Agent 在某些问题上调用了错误的工具，帮我分析可能原因并给出改进 tool description 的具体建议，让 LLM 更容易区分 get_weather 和 get_forecast 这两个工具。</span>
+        <button class="pt-copy btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">复制</button>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(8)">← 上一章</button>
+    <button class="btn btn-primary" onclick="goTo(10)">下一章 →</button>
+  </div>
+</div>
+
+<!-- ══════════ CH 10: 多 Agent 协作 ══════════ -->
+<div class="ch-page" id="ch-10">
+  <div class="ch-hero">
+    <div class="ch-tag">CHAPTER 10 · MULTI-AGENT</div>
+    <h2>🤝 多 Agent 协作设计</h2>
+    <p>单个 Agent 有能力上限——复杂任务需要多个 Agent 分工协作。理解协作模式与设计陷阱，才能构建可靠的多 Agent 系统。</p>
+  </div>
+  <div class="ch-body">
+
+    <h3>为什么需要多 Agent？</h3>
+    <p>单 Agent 在以下场景会遇到瓶颈：</p>
+    <ul>
+      <li><strong>上下文窗口限制</strong>：任务涉及的信息量超过单次 Token 上限</li>
+      <li><strong>并行效率</strong>：多个子任务可以同时推进，无需串行等待</li>
+      <li><strong>专业化分工</strong>：搜索、写作、代码、审核各有专精，一个 Agent 难以兼顾</li>
+      <li><strong>相互校验</strong>：一个 Agent 生成，另一个审核，减少幻觉和错误</li>
+    </ul>
+    <div class="callout callout-tip"><strong>经验法则：</strong>如果你发现单个 Agent 的 System Prompt 越写越长、工具越加越多，通常是拆分为多 Agent 的信号。</div>
+
+    <h3>两种核心编排模式</h3>
+    <div class="mem-grid">
+      <div class="mem-card" style="border-color:rgba(0,217,255,.3)">
+        <h5 style="color:var(--cyan)">🎯 集中式编排（Orchestrator）</h5>
+        <ul>
+          <li>一个主 Agent 接收任务、分解步骤</li>
+          <li>将子任务分派给专职子 Agent</li>
+          <li>汇总结果，生成最终输出</li>
+          <li>优点：流程清晰、易于调试</li>
+          <li>缺点：主 Agent 是单点瓶颈</li>
+        </ul>
+      </div>
+      <div class="mem-card" style="border-color:rgba(147,51,234,.3)">
+        <h5 style="color:#ffffff">🔗 去中心化（Pipeline）</h5>
+        <ul>
+          <li>Agent 之间按流水线依次传递</li>
+          <li>上一个的输出是下一个的输入</li>
+          <li>无需中央控制节点</li>
+          <li>优点：扩展灵活、模块解耦</li>
+          <li>缺点：错误传播难以中途干预</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>集中式编排示意</h3>
+    <div class="diag-box">
+      <h4>ORCHESTRATOR PATTERN</h4>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+        <div class="arch-box" style="border-color:rgba(0,217,255,.4);background:rgba(0,217,255,.06);max-width:300px">
+          👤 用户任务<br><span style="font-size:11px;color:var(--text-3)">"研究竞品，写分析报告，发给团队"</span>
+        </div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-box" style="border-color:rgba(147,51,234,.5);background:rgba(147,51,234,.08);max-width:300px;font-weight:700">
+          🎯 Orchestrator Agent<br><span style="font-size:11px;color:var(--text-3);font-weight:400">分解任务 → 分派 → 汇总</span>
+        </div>
+        <div style="display:flex;gap:16px;margin:8px 0;align-items:flex-start">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+            <div style="color:var(--text-3);font-size:14px">↙</div>
+            <div class="arch-box" style="border-color:rgba(0,255,176,.3);background:rgba(0,255,176,.05);min-width:130px;font-size:12px">🔍 搜索 Agent<br><span style="font-size:10px;color:var(--text-3)">收集竞品信息</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+            <div style="color:var(--text-3);font-size:14px">↓</div>
+            <div class="arch-box" style="border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.05);min-width:130px;font-size:12px">✍️ 写作 Agent<br><span style="font-size:10px;color:var(--text-3)">生成分析报告</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+            <div style="color:var(--text-3);font-size:14px">↘</div>
+            <div class="arch-box" style="border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05);min-width:130px;font-size:12px">📧 发送 Agent<br><span style="font-size:10px;color:var(--text-3)">发邮件给团队</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>接口设计：Agent 之间怎么传递信息</h3>
+    <p>子 Agent 的输入输出必须<strong>结构化</strong>，不能是随意的自然语言。否则上游的措辞变化会让下游解析失败。</p>
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">agent_interface.py</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre><span class="cm"># ❌ 差的做法：传自然语言，下游 Agent 靠 LLM 理解，容易出错</span>
+result = search_agent.run(<span class="st">"帮我搜一下竞品的价格和功能"</span>)
+write_agent.run(<span class="st">f"根据以下信息写报告：{result}"</span>)
+
+<span class="cm"># ✅ 好的做法：结构化 JSON 接口，明确输入输出契约</span>
+search_result = search_agent.run({
+    <span class="st">"query"</span>: <span class="st">"竞品价格对比"</span>,
+    <span class="st">"competitors"</span>: [<span class="st">"产品A"</span>, <span class="st">"产品B"</span>],
+    <span class="st">"fields"</span>: [<span class="st">"price"</span>, <span class="st">"features"</span>, <span class="st">"reviews"</span>]
+})
+<span class="cm"># search_result 返回: {"products": [...], "summary": "..."}</span>
+
+write_result = write_agent.run({
+    <span class="st">"template"</span>: <span class="st">"competitive_analysis"</span>,
+    <span class="st">"data"</span>: search_result[<span class="st">"products"</span>],
+    <span class="st">"tone"</span>: <span class="st">"professional"</span>
+})
+<span class="cm"># write_result 返回: {"report": "...", "word_count": 800}</span></pre>
+    </div>
+
+    <h3>上下文隔离：只传必要信息</h3>
+    <p>子 Agent 不应该拿到主 Agent 的全部对话历史。只传它完成任务所需的最小上下文：</p>
+    <div class="code-wrap">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><div class="code-fname">orchestrator.py</div><button class="copy-btn" onclick="cp(this)">复制</button></div>
+      <pre><span class="kw">def</span> <span class="fn">run_orchestrator</span>(user_task: str):
+    <span class="cm"># 主 Agent：理解任务，分解步骤</span>
+    plan = orchestrator_llm(user_task)
+    <span class="cm"># plan = {"steps": [{"agent": "search", "input": {...}}, ...]}</span>
+
+    results = {}
+    <span class="kw">for</span> step <span class="kw">in</span> plan[<span class="st">"steps"</span>]:
+        agent_name = step[<span class="st">"agent"</span>]
+        agent_input = step[<span class="st">"input"</span>]
+
+        <span class="cm"># ✅ 每个子 Agent 只拿自己需要的输入 + 前序结果</span>
+        <span class="kw">if</span> step.get(<span class="st">"depends_on"</span>):
+            prev = results[step[<span class="st">"depends_on"</span>]]
+            agent_input[<span class="st">"context"</span>] = prev  <span class="cm"># 只注入依赖的上一步结果</span>
+
+        results[agent_name] = <span class="fn">run_sub_agent</span>(agent_name, agent_input)
+
+    <span class="cm"># 主 Agent 汇总所有结果</span>
+    <span class="kw">return</span> <span class="fn">summarize</span>(results)</pre>
+    </div>
+
+    <h3>三大设计陷阱</h3>
+    <table class="ctable">
+      <tr><th>陷阱</th><th>现象</th><th>避免方式</th></tr>
+      <tr>
+        <td><strong>循环调用</strong></td>
+        <td>Agent A 调 B，B 又调回 A，无限循环</td>
+        <td>维护调用链，检测重复节点；设置最大深度限制</td>
+      </tr>
+      <tr>
+        <td><strong>错误静默传播</strong></td>
+        <td>子 Agent 失败但返回空结果，主 Agent 继续处理，最终输出错误</td>
+        <td>子 Agent 失败必须返回明确的 <code>{"error": "..."}</code>，主 Agent 检查每步结果</td>
+      </tr>
+      <tr>
+        <td><strong>上下文爆炸</strong></td>
+        <td>把所有历史传给每个子 Agent，Token 暴增，成本失控</td>
+        <td>严格隔离上下文，每个子 Agent 只接收完成本步骤必需的信息</td>
+      </tr>
+    </table>
+
+    <h3>何时拆分为多 Agent？</h3>
+    <div class="pill-row">
+      <div class="pill pill-g">单次任务超过 10 步</div>
+      <div class="pill pill-g">需要并行执行子任务</div>
+      <div class="pill pill-g">需要相互校验输出质量</div>
+      <div class="pill pill-c">System Prompt 超过 500 字仍不够用</div>
+      <div class="pill pill-c">工具超过 8 个难以管理</div>
+      <div class="pill pill-p">不同子任务需要不同模型（强模型规划 + 弱模型执行）</div>
+    </div>
+
+    <div class="quiz-box">
+      <div class="quiz-q">❓ 小测验：子 Agent 应该接收什么上下文？</div>
+      <button class="quiz-o" onclick="quiz(this,false)">A. 主 Agent 的完整对话历史，确保信息全面</button>
+      <button class="quiz-o" onclick="quiz(this,true)">B. 只传完成本步骤所必需的最小信息</button>
+      <button class="quiz-o" onclick="quiz(this,false)">C. 不需要任何上下文，让子 Agent 自己判断</button>
+      <button class="quiz-o" onclick="quiz(this,false)">D. 用户的原始输入</button>
+      <div class="quiz-res"></div>
+    </div>
+
+    <div class="callout callout-success">🎓 <strong>全部完成！</strong>从单 Agent 到多 Agent 协作，你已经掌握了构建生产级 AI Agent 系统的完整知识体系。下一步：选一个真实场景，动手搭一个多 Agent 系统！</div>
+
+    <div class="prompt-tips">
+      <div class="pt-header">
+        <span style="font-size:16px">🤖</span>
+        <span class="pt-title">用 AI 实现时，这样描述更精准</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-3)">复制给 Cursor / Claude Code</span>
+      </div>
+      <div class="pt-item">
+        <span class="pt-label">编排模式</span>
+        <span class="pt-text">帮我实现集中式编排模式：orchestrator_agent() 接收用户任务，调用 LLM 将任务分解为 JSON 步骤列表，依次调用对应的 worker_agent()，最后汇总所有子结果生成最终回答。</span>
+        <button class="pt-copy btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">复制</button>
+      </div>
+      <div class="pt-item">
+        <span class="pt-label">上下文隔离</span>
+        <span class="pt-text">在多 Agent 系统中，主 Agent 调用子 Agent 时只传递完成当前子任务所需的最小信息，不传完整对话历史。帮我封装一个 call_subagent(task_desc, context_dict) 函数实现这个模式。</span>
+        <button class="pt-copy btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">复制</button>
+      </div>
+      <div class="pt-item">
+        <span class="pt-label">结果校验</span>
+        <span class="pt-text">给多 Agent 系统加一个 reviewer_agent()：接收另一个 Agent 的输出和原始任务描述，用 LLM 判断输出是否满足任务要求，返回 {passed: bool, feedback: str}，不满足时触发重新执行。</span>
+        <button class="pt-copy btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">复制</button>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(9)">← 上一章</button>
+    <button class="btn" disabled>COURSE COMPLETE 🎉</button>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+const CHS = [
+  "欢迎与概述","什么是 AI Agent？","编程语言选择",
+  "LLM 基础知识","工具调用","Agent 循环",
+  "记忆系统","构建第一个 Agent","进阶概念","Agent 质量评估","多 Agent 协作"
+];
+let cur = 0, visited = new Set([0]);
+
+const list = document.getElementById('ch-list');
+CHS.forEach((label, i) => {
+  if (i === 0) {
+    const sec = document.createElement('div');
+    sec.className = 'ch-section';
+    sec.textContent = '入门';
+    list.appendChild(sec);
+  } else if (i === 8) {
+    const sec = document.createElement('div');
+    sec.className = 'ch-section';
+    sec.textContent = '进阶';
+    list.appendChild(sec);
+  }
+  const el = document.createElement('div');
+  el.className = 'ch-item' + (i === 0 ? ' active' : '');
+  el.id = 'nav' + i;
+  el.onclick = () => goTo(i);
+  el.innerHTML = `<div class="ch-hex">${i === 0 ? '★' : i}</div><div class="ch-label">${label}</div>`;
+  list.appendChild(el);
+});
+
+function goTo(n) {
+  document.getElementById('ch-' + cur).classList.remove('visible');
+  document.getElementById('nav' + cur).classList.remove('active');
+  cur = n; visited.add(n);
+  document.getElementById('ch-' + n).classList.add('visible');
+  document.getElementById('nav' + n).classList.add('active');
+  for (let i = 0; i < n; i++) {
+    const el = document.getElementById('nav' + i);
+    if (!el.classList.contains('active')) el.classList.add('done');
+    if (i > 0) el.querySelector('.ch-hex').textContent = '✓';
+  }
+  const done = Math.max(visited.size - 1, 0);
+  document.getElementById('prog-fill').style.width = Math.round(done/(CHS.length-1)*100)+'%';
+  document.getElementById('prog-text').textContent = done + ' / ' + (CHS.length - 1);
+  document.getElementById('main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function switchTab(btn, id) {
+  const wrap = btn.closest('.tabs');
+  wrap.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  wrap.querySelectorAll('.tab-p').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+function quiz(btn, correct) {
+  const box = btn.closest('.quiz-box');
+  box.querySelectorAll('.quiz-o').forEach(b => b.style.pointerEvents = 'none');
+  const res = box.querySelector('.quiz-res');
+  res.style.display = 'block';
+  if (correct) {
+    btn.classList.add('correct');
+    res.style.color = 'var(--green)';
+    res.textContent = '✅ 正确！你理解了这个核心概念。';
+  } else {
+    btn.classList.add('wrong');
+    res.style.color = '#FC8181';
+    res.textContent = '❌ 再想想？提示：查看本章的 ✅ 关键点提示框。';
+    box.querySelectorAll('.quiz-o').forEach(b => {
+      if (b.getAttribute('onclick')?.includes('true')) b.classList.add('correct');
+    });
+  }
+}
+
+function cp(btn) {
+  const text = btn.closest('.code-wrap').querySelector('pre').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const o = btn.textContent;
+    btn.textContent = 'COPIED ✓';
+    btn.style.color = 'var(--lime)';
+    btn.style.borderColor = 'var(--lime)';
+    setTimeout(() => { btn.textContent = o; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+  });
+}
+
+// Inject particles into every hero
+document.querySelectorAll('.ch-hero').forEach(hero => {
+  const el = document.createElement('div');
+  el.className = 'hero-particles';
+  for (let i = 0; i < 18; i++) {
+    const s = document.createElement('span');
+    s.style.cssText = `
+      left:${Math.random()*100}%;
+      bottom:${Math.random()*40}%;
+      --dur:${4 + Math.random()*6}s;
+      --delay:${Math.random()*6}s;
+      --dx:${(Math.random()-0.5)*60}px;
+      opacity:0;
+    `;
+    el.appendChild(s);
+  }
+  hero.insertBefore(el, hero.firstChild);
+});
+
+// ── Right-side anchor navigation ─────────────────────────
+const anchorNav = document.createElement('div');
+anchorNav.id = 'anchor-nav';
+anchorNav.innerHTML = `
+  <div id="anchor-panel">
+    <div id="anchor-panel-title">本章导航</div>
+  </div>
+  <div id="anchor-tab">目 录</div>
+`;
+document.body.appendChild(anchorNav);
+
+const panel = document.getElementById('anchor-panel');
+const mainEl = document.getElementById('main');
+
+// Build nav items for the currently visible chapter
+function buildAnchorNav(chEl) {
+  panel.querySelectorAll('.an-item').forEach(el => el.remove());
+  const heads = chEl.querySelectorAll('h3[id]');
+  if (!heads.length) { anchorNav.style.display = 'none'; return; }
+  anchorNav.style.display = 'flex';
+  heads.forEach(h => {
+    const item = document.createElement('div');
+    item.className = 'an-item';
+    item.dataset.target = h.id;
+    item.innerHTML = `<span class="an-dot"></span><span>${h.textContent}</span>`;
+    item.addEventListener('click', () => {
+      const el = document.getElementById(h.id);
+      if (el) mainEl.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' });
+    });
+    panel.appendChild(item);
+  });
+  updateActive();
+}
+
+// Highlight active section based on scroll position in #main
+function updateActive() {
+  const items = panel.querySelectorAll('.an-item');
+  const scrollTop = mainEl.scrollTop + 120;
+  let current = null;
+  items.forEach(item => {
+    const target = document.getElementById(item.dataset.target);
+    if (target && target.offsetTop <= scrollTop) current = item;
+  });
+  items.forEach(i => i.classList.remove('active'));
+  if (current) current.classList.add('active');
+  else if (items.length) items[0].classList.add('active');
+}
+
+mainEl.addEventListener('scroll', updateActive, { passive: true });
+
+// Hook into goTo to update anchor nav on chapter change
+const _origGoTo = window.goTo;
+window.goTo = function(n) {
+  if (_origGoTo) _origGoTo(n);
+  setTimeout(() => {
+    const ch = document.getElementById('ch-' + n);
+    if (ch) buildAnchorNav(ch);
+  }, 60);
+};
+
+// Initialize for the starting chapter (ch-0)
+setTimeout(() => {
+  const ch = document.getElementById('ch-0');
+  if (ch) buildAnchorNav(ch);
+}, 150);
+</script>
+</body>
+</html>
